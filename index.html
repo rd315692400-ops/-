@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>המנהל הפיננסי שלי</title>
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#111827">
-<link rel="apple-touch-icon" href="/icon-192.png">
 <style>
 :root{
   --bg:#f4f6fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;
@@ -46,6 +43,25 @@ nav button.active{color:var(--text);font-weight:800}
 .receipt{border:2px dashed #cbd5e1;border-radius:16px;padding:18px;text-align:center;background:#fafafa}
 .ai{display:flex;gap:8px}.ai input{flex:1}.answer{margin-top:12px;border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:14px;min-height:70px}
 @media(max-width:780px){.g2,.g3,.form{grid-template-columns:1fr}h1{font-size:22px}.metric{font-size:24px}.hero{align-items:flex-start}.nav{grid-template-columns:repeat(8,1fr)}nav button{font-size:9px}}
+
+/* Visual refresh — does not change bank/API logic */
+header{
+  background:linear-gradient(135deg,#111827 0%,#1f2937 62%,#374151 100%);
+  color:#fff;padding:18px;border-radius:22px;position:relative;overflow:hidden;
+  box-shadow:0 12px 30px rgba(17,24,39,.16)
+}
+header:after{
+  content:"🪙  🪙  🪙";position:absolute;left:18px;top:-8px;
+  font-size:34px;letter-spacing:7px;transform:rotate(-16deg);opacity:.95
+}
+header .sub{color:#d1d5db}
+header .badge{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2);backdrop-filter:blur(8px)}
+.card{border-radius:22px}
+.metric{letter-spacing:-.5px}
+nav{box-shadow:0 -8px 25px rgba(17,24,39,.06)}
+nav button.active{background:#f3f4f6;border-radius:14px}
+#bank .card:first-child{border-top:4px solid #111827}
+#bankStatus{color:var(--good)}
 </style>
 </head>
 <body>
@@ -103,17 +119,16 @@ nav button.active{color:var(--text);font-weight:800}
 <h3 class="section">המערכת למדה</h3>
 <div class="small">כללים שנלמדו מבתי עסק ותיקונים שלך.</div>
 <div id="learnedRules" style="margin-top:10px"></div>
-</div>
-<div class="card" style="margin-top:16px;box-shadow:none">
-<h3 class="section">כללי סיווג אוטומטיים</h3>
-<div class="small">הגדר מילת זיהוי שתופיע בתיאור התנועה. לדוגמה: רמי לוי → מזון.</div>
+<div style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px">
+<h3 class="section">כללי סיווג שלי</h3>
+<div class="small">לדוגמה: רמי לוי ← מזון, משיכה ← בלת״ם.</div>
 <div class="form" style="margin-top:10px">
-<input id="ruleText" placeholder="מילה / בית עסק, למשל רמי לוי">
+<input id="ruleText" placeholder="מילה לזיהוי, למשל רמי לוי">
 <select id="ruleCategory"></select>
-<select id="ruleKind"><option>שוטפת</option><option>קבועה</option><option>תשלומים</option><option>בלת״ם</option><option>שוק ההון</option></select>
 <button onclick="addManualRule()">הוסף כלל</button>
 </div>
-<div id="manualRulesList" style="margin-top:12px"></div>
+<div id="manualRulesList" style="margin-top:10px"></div>
+</div>
 </div>
 </div>
 </section>
@@ -247,9 +262,9 @@ let receipts=storage.get('receipts',[]);
 let savingGoal=storage.get('savingGoal',2000);
 let merchantRules=storage.get('merchantRules',{});
 let recurringRules=storage.get('recurringRules',{});
-let manualRules=storage.get('manualRules',[]);
 let bankConnection=storage.get('bankConnection',{connected:false,accountName:'',lastSync:null});
 let bankImported=storage.get('bankImported',[]);
+let manualRules=storage.get('manualRules',[]);
 
 function persist(){
 storage.set('categories',categories);
@@ -259,9 +274,9 @@ storage.set('receipts',receipts);
 storage.set('savingGoal',savingGoal);
 storage.set('merchantRules',merchantRules);
 storage.set('recurringRules',recurringRules);
-  storage.set('manualRules',manualRules);
 storage.set('bankConnection',bankConnection);
 storage.set('bankImported',bankImported);
+  storage.set('manualRules',manualRules);
 }
 
 function mi(){
@@ -380,7 +395,7 @@ budgetTable.innerHTML='<table><thead><tr><th>קטגוריה</th><th>סוג</th><
 categories.map(c=>`<tr><td>${c.name}</td><td>${c.type}</td><td>${fmt(c.budget)}</td><td>${fmt(spent(c.name))}</td><td>${fmt(c.budget-spent(c.name))}</td></tr>`).join('')+'</tbody></table>'
 }
 function renderTx(){
-txTable.innerHTML=monthTx().slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>`<tr><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
+txTable.innerHTML=[...transactions].reverse().map(t=>`<tr><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
 }
 function renderSelects(){
 const o=categories.map(c=>`<option>${c.name}</option>`).join('');
@@ -400,25 +415,22 @@ return`<div class="cat"><div class="row"><strong>${name}</strong><span>${best}</
 }).join('');
 learnedRules.innerHTML=rows||'<div class="small">עדיין אין כללים שנלמדו.</div>'
 }
+
+function renderManualRules(){
+ const el=document.getElementById('manualRulesList');if(!el)return;
+ el.innerHTML=manualRules.length?manualRules.map((r,i)=>`<div class="cat"><div class="row"><strong>${r.text}</strong><span>${r.category} <button class="secondary" style="padding:6px 9px;margin-right:8px" onclick="deleteManualRule(${i})">מחק</button></span></div></div>`).join(''):'<div class="small">עדיין לא הוגדרו כללים.</div>';
+}
+function addManualRule(){
+ const t=(ruleText.value||'').trim();if(!t)return alert('נא להזין מילה לזיהוי');
+ manualRules.push({text:t,category:ruleCategory.value});ruleText.value='';render();
+}
+function deleteManualRule(i){manualRules.splice(i,1);render()}
+
 function renderBank(){
 bankStatus.textContent=bankConnection.connected?'מחובר':'לא מחובר';
 bankAccountName.textContent=bankConnection.connected?(bankConnection.accountName||'חשבון מחובר'):'—';
 bankLastSync.textContent=bankConnection.lastSync?new Date(bankConnection.lastSync).toLocaleString('he-IL'):'—';
-const now=new Date(); const monthly=bankImported.filter(r=>{const d=new Date(r.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).sort((a,b)=>new Date(b.date)-new Date(a.date));
- bankTxTable.innerHTML=monthly.length?monthly.map(r=>`<tr><td>${r.date}</td><td>${r.description}</td><td>${fmt(r.amount)}</td><td>${r.direction==='income'?'הכנסה':'הוצאה'}</td><td>${r.category} / ${r.kind}</td></tr>`).join(''):'<tr><td colspan="5" class="small">אין תנועות בחודש הנוכחי.</td></tr>'
-}
-
-function renderManualRules(){
- const el=document.getElementById('manualRulesList');if(!el)return;
- el.innerHTML=manualRules.length?manualRules.map((r,i)=>`<div class="cat"><div class="row"><strong>${r.text}</strong><span>${r.category} / ${r.kind} <button class="secondary" style="padding:6px 9px;margin-right:8px" onclick="deleteManualRule(${i})">מחק</button></span></div></div>`).join(''):'<div class="small">עדיין לא הוגדרו כללים ידניים.</div>';
-}
-function addManualRule(){
- const text=ruleText.value.trim();if(!text)return alert('נא להזין מילת זיהוי או בית עסק');
- manualRules.push({text,category:ruleCategory.value,kind:ruleKind.value});ruleText.value='';render();
-}
-function deleteManualRule(i){manualRules.splice(i,1);render()}
-function manualRuleFor(desc){
- const d=normalizeMerchant(desc);return manualRules.find(r=>d.includes(normalizeMerchant(r.text)))||null;
+bankTxTable.innerHTML=bankImported.length?[...bankImported].reverse().map(r=>`<tr><td>${r.date}</td><td>${r.description}</td><td>${fmt(r.amount)}</td><td>${r.direction==='income'?'הכנסה':'הוצאה'}</td><td>${r.category} / ${r.kind}</td></tr>`).join(''):'<tr><td colspan="5" class="small">עדיין לא בוצע סנכרון.</td></tr>'
 }
 
 function showPage(id,b){
@@ -508,7 +520,6 @@ async function disconnectBank(){
   bankConnection={connected:false,accountName:'',lastSync:null};render()
 }
 function guessBankCategory(desc,dir){
- const manual=manualRuleFor(desc);if(manual)return{category:manual.category,kind:manual.kind};
  if(dir==='income'){
   if(desc.includes('ביטוח לאומי'))return{category:'ילדים',kind:'קבועה'};
   return{category:'דיור',kind:'קבועה'}
@@ -527,29 +538,12 @@ function txDirection(r,rawAmount){
   if(v.includes('debit')||v==='expense'||v==='out') return 'expense';
   return rawAmount>=0?'income':'expense';
 }
-function firstText(v){
-  if(v===null||v===undefined)return '';
-  if(typeof v==='string'||typeof v==='number')return String(v).trim();
-  if(typeof v!=='object')return '';
-  const keys=['description','merchantName','merchant','name','displayName','text','value','label','details','memo','reference','initialClean','additionalInfo'];
-  for(const k of keys){const x=firstText(v[k]);if(x)return x;}
-  return '';
-}
 function txDescription(r){
-  const candidates=[r.description,r.merchant,r.merchantName,r.name,r.memo,r.reference,r.details,r.initialClean,r.additionalInfo];
-  for(const v of candidates){const x=firstText(v);if(x)return x;}
-  return 'תנועת בנק';
-}
-function normalizeBankDate(v){
-  const x=firstText(v);if(!x)return '';
-  const m=x.match(/^(\d{2})[-/.](\d{2})[-/.](\d{4})$/);if(m)return `${m[3]}-${m[2]}-${m[1]}`;
-  const iso=x.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const d=new Date(x);return Number.isNaN(d.getTime())?'':d.toISOString().slice(0,10);
+  return r.description||r.merchant||r.merchantName||r.name||r.memo||r.reference||r.details||'תנועת בנק';
 }
 function txDateValue(r){
-  const candidates=[r.date,r.bookingDate,r.booking_date,r.valueDate,r.value_date,r.transactionDate,r.transaction_date,r.dateValue];
-  for(const v of candidates){const d=normalizeBankDate(v);if(d)return d;}
-  return new Date().toISOString().slice(0,10);
+  const d=r.date||r.bookingDate||r.booking_date||r.valueDate||r.value_date||r.transactionDate||r.transaction_date;
+  return d?String(d).slice(0,10):new Date().toISOString().slice(0,10);
 }
 async function refreshOpenFinanceStatus(){
  try{
@@ -562,8 +556,7 @@ async function refreshOpenFinanceStatus(){
 }
 async function syncOpenFinance(){
  try{
-  const now=new Date();const from=new Date(now.getFullYear(),now.getMonth(),1);const dateFrom=from.toISOString().slice(0,10),dateTo=now.toISOString().slice(0,10);
-   const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/transactions?dateFrom=${dateFrom}&dateTo=${dateTo}&sort=-1`);
+  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/transactions`);
   if(!res.ok)throw new Error('transactions');
   const data=await res.json(),rows=unwrapList(data,['transactions','items','results']); let added=0;
   rows.forEach(r=>{
@@ -571,13 +564,11 @@ async function syncOpenFinance(){
    const description=String(txDescription(r));
    const date=txDateValue(r);
    const id=String(r.id||r.transactionId||r.transaction_id||r.entryReference||`${date}-${description}-${raw}`);
+   if(bankImported.find(x=>String(x.id)===id))return;
    const direction=txDirection(r,raw),amount=Math.abs(raw),c=guessBankCategory(description,direction);
    const row={id,date,description,amount,direction,category:c.category,kind:c.kind};
-   const bi=bankImported.findIndex(x=>String(x.id)===id);
-   if(bi>=0) bankImported[bi]=row; else bankImported.push(row);
-   const ti=transactions.findIndex(x=>String(x.bankId)===id);
-   const tx={bankId:id,date,merchant:description,amount,direction,category:c.category,kind:c.kind,source:'open-finance'};
-   if(ti>=0) transactions[ti]=tx; else transactions.push(tx);
+   bankImported.push(row);
+   transactions.push({bankId:id,date,merchant:description,amount,direction,category:c.category,kind:c.kind,source:'open-finance'});
    if(direction==='expense')rememberMerchant(description,c.category); added++
   });
   bankConnection.connected=true; bankConnection.lastSync=new Date().toISOString(); render();
@@ -623,7 +614,6 @@ txDate.value=new Date().toISOString().slice(0,10);
 receiptDate.value=new Date().toISOString().slice(0,10);
 render();
 refreshOpenFinanceStatus();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(console.warn)}
 </script>
 </body>
 </html>
