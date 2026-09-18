@@ -490,40 +490,12 @@ function guessBankCategory(desc,dir){
  if(desc.includes('ברוקר'))return{category:'שוק ההון',kind:'שוק ההון'};
  return{category:'מזון',kind:'שוטפת'}
 }
-function txDirection(r,rawAmount){
-  const v=String(r.direction||r.type||r.creditDebitIndicator||r.credit_debit_indicator||'').toLowerCase();
-  if(v.includes('credit')||v==='income'||v==='in') return 'income';
-  if(v.includes('debit')||v==='expense'||v==='out') return 'expense';
-  return rawAmount>=0?'income':'expense';
-}
-function primitiveValue(v, preferred=[]){
-  if(v===null||v===undefined) return null;
-  if(typeof v!=='object') return v;
-  for(const k of preferred){ if(v[k]!==undefined&&v[k]!==null){ const x=primitiveValue(v[k],preferred); if(x!==null&&x!=='') return x; } }
-  for(const x of Object.values(v)){ if(typeof x==='string'||typeof x==='number') return x; }
-  return null;
-}
-function txDescription(r){
-  for(const v of [r.description,r.merchant,r.merchantName,r.name,r.memo,r.reference,r.details,r.transactionInformation,r.remittanceInformation]){
-    const x=primitiveValue(v,['description','name','value','text','displayName','merchantName']);
-    if(x!==null&&String(x).trim()) return String(x).trim();
-  }
-  return 'תנועת בנק';
-}
-function txDateValue(r){
-  for(const v of [r.date,r.bookingDate,r.booking_date,r.valueDate,r.value_date,r.transactionDate,r.transaction_date,r.bookingDateTime]){
-    const x=primitiveValue(v,['date','value','bookingDate','transactionDate']);
-    if(x){ const d=new Date(x); if(!Number.isNaN(d.getTime())) return d.toISOString().slice(0,10); }
-  }
-  return new Date().toISOString().slice(0,10);
-}
-function txAmountValue(r){
-  for(const v of [r.amount,r.transactionAmount,r.value,r.amountValue,r.transaction_amount]){
-    const x=primitiveValue(v,['amount','value','quantity']);
-    const n=Number(String(x??'').replace(/,/g,'')); if(Number.isFinite(n)) return n;
-  }
-  return 0;
-}
+function scalar(v,keys=[]){if(v==null)return '';if(typeof v!=='object')return v;for(const k of keys){if(v[k]!=null&&typeof v[k]!=='object')return v[k]}for(const x of Object.values(v)){if(x!=null&&typeof x!=='object')return x}return ''}
+function txAmountValue(r){for(const v of [r.amount,r.transactionAmount,r.transaction_amount,r.value,r.sum,r.total]){const x=scalar(v,['amount','value','sum','total','number']);const n=Number(String(x).replace(/,/g,''));if(Number.isFinite(n))return n}return 0}
+function txDirection(r,rawAmount){const x=scalar(r.direction||r.type||r.creditDebitIndicator||r.credit_debit_indicator,['value','code','name','type']);const v=String(x||'').toLowerCase();if(v.includes('credit')||v==='income'||v==='in')return 'income';if(v.includes('debit')||v==='expense'||v==='out')return 'expense';return rawAmount>=0?'income':'expense'}
+function txDescription(r){for(const v of [r.description,r.merchant,r.merchantName,r.name,r.memo,r.reference,r.details,r.counterparty,r.business]){const x=scalar(v,['description','name','displayName','merchantName','text','value','label']);if(String(x||'').trim())return String(x).trim()}return 'תנועת בנק'}
+function txDateValue(r){for(const v of [r.date,r.bookingDate,r.booking_date,r.valueDate,r.value_date,r.transactionDate,r.transaction_date]){const x=scalar(v,['date','value','bookingDate','transactionDate']);if(x){const m=String(x).match(/\d{4}-\d{2}-\d{2}/);if(m)return m[0];const d=new Date(x);if(!Number.isNaN(d.getTime()))return d.toISOString().slice(0,10)}}return new Date().toISOString().slice(0,10)}
+
 async function refreshOpenFinanceStatus(){
  try{
   const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/accounts`); if(!res.ok)return;
