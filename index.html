@@ -527,12 +527,29 @@ function txDirection(r,rawAmount){
   if(v.includes('debit')||v==='expense'||v==='out') return 'expense';
   return rawAmount>=0?'income':'expense';
 }
+function firstText(v){
+  if(v===null||v===undefined)return '';
+  if(typeof v==='string'||typeof v==='number')return String(v).trim();
+  if(typeof v!=='object')return '';
+  const keys=['description','merchantName','merchant','name','displayName','text','value','label','details','memo','reference','initialClean','additionalInfo'];
+  for(const k of keys){const x=firstText(v[k]);if(x)return x;}
+  return '';
+}
 function txDescription(r){
-  return r.description||r.merchant||r.merchantName||r.name||r.memo||r.reference||r.details||'תנועת בנק';
+  const candidates=[r.description,r.merchant,r.merchantName,r.name,r.memo,r.reference,r.details,r.initialClean,r.additionalInfo];
+  for(const v of candidates){const x=firstText(v);if(x)return x;}
+  return 'תנועת בנק';
+}
+function normalizeBankDate(v){
+  const x=firstText(v);if(!x)return '';
+  const m=x.match(/^(\d{2})[-/.](\d{2})[-/.](\d{4})$/);if(m)return `${m[3]}-${m[2]}-${m[1]}`;
+  const iso=x.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const d=new Date(x);return Number.isNaN(d.getTime())?'':d.toISOString().slice(0,10);
 }
 function txDateValue(r){
-  const d=r.date||r.bookingDate||r.booking_date||r.valueDate||r.value_date||r.transactionDate||r.transaction_date;
-  return d?String(d).slice(0,10):new Date().toISOString().slice(0,10);
+  const candidates=[r.date,r.bookingDate,r.booking_date,r.valueDate,r.value_date,r.transactionDate,r.transaction_date,r.dateValue];
+  for(const v of candidates){const d=normalizeBankDate(v);if(d)return d;}
+  return new Date().toISOString().slice(0,10);
 }
 async function refreshOpenFinanceStatus(){
  try{
@@ -554,11 +571,13 @@ async function syncOpenFinance(){
    const description=String(txDescription(r));
    const date=txDateValue(r);
    const id=String(r.id||r.transactionId||r.transaction_id||r.entryReference||`${date}-${description}-${raw}`);
-   if(bankImported.find(x=>String(x.id)===id))return;
    const direction=txDirection(r,raw),amount=Math.abs(raw),c=guessBankCategory(description,direction);
    const row={id,date,description,amount,direction,category:c.category,kind:c.kind};
-   bankImported.push(row);
-   transactions.push({bankId:id,date,merchant:description,amount,direction,category:c.category,kind:c.kind,source:'open-finance'});
+   const bi=bankImported.findIndex(x=>String(x.id)===id);
+   if(bi>=0) bankImported[bi]=row; else bankImported.push(row);
+   const ti=transactions.findIndex(x=>String(x.bankId)===id);
+   const tx={bankId:id,date,merchant:description,amount,direction,category:c.category,kind:c.kind,source:'open-finance'};
+   if(ti>=0) transactions[ti]=tx; else transactions.push(tx);
    if(direction==='expense')rememberMerchant(description,c.category); added++
   });
   bankConnection.connected=true; bankConnection.lastSync=new Date().toISOString(); render();
