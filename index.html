@@ -173,8 +173,8 @@ nav button.active{color:var(--text);font-weight:800}
       <div class="row" style="margin-top:8px"><span>חשבון מחובר</span><strong id="bankAccountName">—</strong></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
-      <button onclick="connectMockBank()">חבר חשבון</button>
-      <button class="secondary" onclick="syncMockBank()">רענן תנועות</button>
+      <button onclick="connectOpenFinance()">בדוק חיבור</button>
+      <button class="secondary" onclick="syncOpenFinance()">רענן תנועות</button>
       <button class="secondary" onclick="disconnectBank()">נתק</button>
     </div>
   </div>
@@ -182,7 +182,7 @@ nav button.active{color:var(--text);font-weight:800}
     <h3 class="section">אבטחה</h3>
     <div class="alert good"><strong>צפייה בלבד</strong><div class="small">אין הרשאת העברה או תשלום.</div></div>
     <div class="alert good"><strong>ללא סיסמת בנק</strong><div class="small">בחיבור אמיתי צריך להשתמש ב-Open Banking.</div></div>
-    <div class="alert"><strong>אבטיפוס</strong><div class="small">החיבור כאן מדומה. אין כרגע גישה לבנק אמיתי.</div></div>
+    <div class="alert good"><strong>Open Finance</strong><div class="small">המערכת מוכנה להתחבר לשרת מאובטח שמחזיק את פרטי ה־API והאסימונים. אין לשמור Client Secret בדפדפן.</div></div>
   </div>
 </div>
 <div class="card" style="margin-top:14px">
@@ -448,45 +448,90 @@ const t=c[0];receiptMerchant.value=t.merchant;receiptCategory.value=t.category;i
 alert(`נמצאה התאמה: ${t.merchant} • ${fmt(t.amount)} • ${t.category}`)
 }
 
-function connectMockBank(){
-bankConnection={connected:true,accountName:'חשבון עו״ש אישי',lastSync:null};render()
+const OPEN_FINANCE_BACKEND = ''; // same-origin: Render serves both the app and API
+
+function unwrapList(data, preferredKeys=[]){
+  if(Array.isArray(data)) return data;
+  if(!data || typeof data!=='object') return [];
+  for(const k of preferredKeys){ if(Array.isArray(data[k])) return data[k]; }
+  if(data.data){ const x=unwrapList(data.data,preferredKeys); if(x.length)return x; }
+  if(data.result){ const x=unwrapList(data.result,preferredKeys); if(x.length)return x; }
+  return [];
 }
-function disconnectBank(){bankConnection={connected:false,accountName:'',lastSync:null};render()}
-function bankDemoRows(){
-const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');
-return[
-{id:`b1-${y}-${m}`,date:`${y}-${m}-02`,description:'משכורת',amount:11200,direction:'income'},
-{id:`b2-${y}-${m}`,date:`${y}-${m}-03`,description:'ביטוח לאומי',amount:2850,direction:'income'},
-{id:`b3-${y}-${m}`,date:`${y}-${m}-04`,description:'רמי לוי',amount:462.70,direction:'expense'},
-{id:`b4-${y}-${m}`,date:`${y}-${m}-05`,description:'פז תחנת דלק',amount:310,direction:'expense'},
-{id:`b5-${y}-${m}`,date:`${y}-${m}-06`,description:'בזק',amount:189.90,direction:'expense'},
-{id:`b6-${y}-${m}`,date:`${y}-${m}-07`,description:'ברוקר השקעות',amount:1500,direction:'expense'}
-]}
+function accountLabel(a){
+  return a.name||a.displayName||a.accountName||a.nickname||a.officialName||
+    [a.bankName||a.institutionName, a.accountNumberMasked||a.mask||a.last4].filter(Boolean).join(' • ')||'חשבון Open Finance';
+}
+async function connectOpenFinance(){
+  try{
+    const health=await fetch(`${OPEN_FINANCE_BACKEND}/api/health`);
+    if(!health.ok) throw new Error('health');
+    const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/accounts`);
+    if(!res.ok) throw new Error('accounts');
+    const data=await res.json(), accounts=unwrapList(data,['accounts','items']);
+    bankConnection={connected:true,accountName:accounts.length?accountLabel(accounts[0]):'חשבון Open Finance',lastSync:bankConnection.lastSync};
+    render();
+    alert(accounts.length?`החיבור פעיל • נמצאו ${accounts.length} חשבונות`:'השרת מחובר ל-Open Finance');
+  }catch(e){console.error(e);alert('לא הצלחתי לקרוא את החשבונות מהשרת. נסה שוב בעוד רגע.')}
+}
+async function disconnectBank(){
+  bankConnection={connected:false,accountName:'',lastSync:null};render()
+}
 function guessBankCategory(desc,dir){
-if(dir==='income'){
-if(desc.includes('ביטוח לאומי'))return{category:'ילדים',kind:'קבועה'};
-return{category:'דיור',kind:'קבועה'}
+ if(dir==='income'){
+  if(desc.includes('ביטוח לאומי'))return{category:'ילדים',kind:'קבועה'};
+  return{category:'דיור',kind:'קבועה'}
+ }
+ const s=autoClassifyMerchant(desc);
+ if(s)return{category:s,kind:autoDetectRecurringType(desc)||'שוטפת'};
+ if(desc.includes('רמי לוי'))return{category:'מזון',kind:'שוטפת'};
+ if(desc.includes('פז'))return{category:'דלק',kind:'שוטפת'};
+ if(desc.includes('בזק'))return{category:'תקשורת',kind:'קבועה'};
+ if(desc.includes('ברוקר'))return{category:'שוק ההון',kind:'שוק ההון'};
+ return{category:'מזון',kind:'שוטפת'}
 }
-const s=autoClassifyMerchant(desc);
-if(s)return{category:s,kind:autoDetectRecurringType(desc)||'שוטפת'};
-if(desc.includes('רמי לוי'))return{category:'מזון',kind:'שוטפת'};
-if(desc.includes('פז'))return{category:'דלק',kind:'שוטפת'};
-if(desc.includes('בזק'))return{category:'תקשורת',kind:'קבועה'};
-if(desc.includes('ברוקר'))return{category:'שוק ההון',kind:'שוק ההון'};
-return{category:'מזון',kind:'שוטפת'}
+function txDirection(r,rawAmount){
+  const v=String(r.direction||r.type||r.creditDebitIndicator||r.credit_debit_indicator||'').toLowerCase();
+  if(v.includes('credit')||v==='income'||v==='in') return 'income';
+  if(v.includes('debit')||v==='expense'||v==='out') return 'expense';
+  return rawAmount>=0?'income':'expense';
 }
-function syncMockBank(){
-if(!bankConnection.connected)return alert('חבר חשבון קודם');
-let added=0;
-bankDemoRows().forEach(r=>{
-if(bankImported.find(x=>x.id===r.id))return;
-const c=guessBankCategory(r.description,r.direction);
-bankImported.push({...r,category:c.category,kind:c.kind});
-transactions.push({bankId:r.id,date:r.date,merchant:r.description,amount:r.amount,direction:r.direction,category:c.category,kind:c.kind,source:'bank'});
-if(r.direction==='expense')rememberMerchant(r.description,c.category);
-added++
-});
-bankConnection.lastSync=new Date().toISOString();render();alert(`נוספו ${added} תנועות`)
+function txDescription(r){
+  return r.description||r.merchant||r.merchantName||r.name||r.memo||r.reference||r.details||'תנועת בנק';
+}
+function txDateValue(r){
+  const d=r.date||r.bookingDate||r.booking_date||r.valueDate||r.value_date||r.transactionDate||r.transaction_date;
+  return d?String(d).slice(0,10):new Date().toISOString().slice(0,10);
+}
+async function refreshOpenFinanceStatus(){
+ try{
+  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/accounts`); if(!res.ok)return;
+  const data=await res.json(),accounts=unwrapList(data,['accounts','items']);
+  bankConnection.connected=true;
+  if(accounts.length) bankConnection.accountName=accountLabel(accounts[0]);
+  render()
+ }catch(e){console.warn('Open Finance status unavailable',e)}
+}
+async function syncOpenFinance(){
+ try{
+  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/transactions`);
+  if(!res.ok)throw new Error('transactions');
+  const data=await res.json(),rows=unwrapList(data,['transactions','items','results']); let added=0;
+  rows.forEach(r=>{
+   const raw=Number((r.amount&&typeof r.amount==='object'?(r.amount.amount??r.amount.value):r.amount)??r.transactionAmount??r.value??0);
+   const description=String(txDescription(r));
+   const date=txDateValue(r);
+   const id=String(r.id||r.transactionId||r.transaction_id||r.entryReference||`${date}-${description}-${raw}`);
+   if(bankImported.find(x=>String(x.id)===id))return;
+   const direction=txDirection(r,raw),amount=Math.abs(raw),c=guessBankCategory(description,direction);
+   const row={id,date,description,amount,direction,category:c.category,kind:c.kind};
+   bankImported.push(row);
+   transactions.push({bankId:id,date,merchant:description,amount,direction,category:c.category,kind:c.kind,source:'open-finance'});
+   if(direction==='expense')rememberMerchant(description,c.category); added++
+  });
+  bankConnection.connected=true; bankConnection.lastSync=new Date().toISOString(); render();
+  alert(rows.length?`נמצאו ${rows.length} תנועות • נוספו ${added} חדשות`:'החיבור עובד, אך לא התקבלו תנועות להצגה.')
+ }catch(e){console.error(e);alert('לא ניתן למשוך כרגע את התנועות מהשרת.')}
 }
 
 function askAI(){
@@ -526,6 +571,7 @@ merchantRules={};transactions.filter(t=>t.direction==='expense').forEach(t=>reme
 txDate.value=new Date().toISOString().slice(0,10);
 receiptDate.value=new Date().toISOString().slice(0,10);
 render();
+refreshOpenFinanceStatus();
 </script>
 </body>
 </html>
