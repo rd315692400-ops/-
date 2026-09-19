@@ -408,7 +408,7 @@ budgetTable.innerHTML='<table><thead><tr><th>קטגוריה</th><th>סוג</th><
 categories.map(c=>`<tr><td>${c.name}</td><td>${c.type}</td><td>${fmt(c.budget)}</td><td>${fmt(spent(c.name))}</td><td>${fmt(c.budget-spent(c.name))}</td></tr>`).join('')+'</tbody></table>'
 }
 function renderTx(){
-txTable.innerHTML=[...transactions].reverse().map(t=>`<tr><td>#${String(txNumberMap()[txUniqueKey(t)]||0).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
+txTable.innerHTML=[...transactions].reverse().map(t=>`<tr><td>${String(txNumberMap()[txUniqueKey(t)]||0).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
 }
 function renderSelects(){
 const o=categories.map(c=>`<option>${c.name}</option>`).join('');
@@ -590,7 +590,7 @@ function renderBank(){
       const frequency=String(t.kind||'')==='קבועה'?'קבועה':'חד פעמי';
       const sid=`scope_${bankView}_${g.fixed?'f':'n'}_${i}`;
       return `<div class="item"><div style="width:100%">
-        <b>#${String(numMap[txUniqueKey(t)]||0).padStart(3,'0')} • ${t.merchant||t.description||'תנועה'}</b>
+        <b>${String(numMap[txUniqueKey(t)]||0).padStart(3,'0')} • ${t.merchant||t.description||'תנועה'}</b>
         <div class="muted">${t.date||''} • ${fmt(t.amount||0)}</div>
         <div class="tx-edit">
           <select id="${sid}">
