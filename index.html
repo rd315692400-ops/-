@@ -253,13 +253,8 @@ const d=new Date(),total=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
 return{day:d.getDate(),total,left:total-d.getDate()}
 }
 function monthTx(){
- const now=new Date(), y=now.getFullYear(), mo=now.getMonth();
- return transactions
-   .filter(t=>{
-     const d=new Date(t.date);
-     return !isNaN(d)&&d.getFullYear()===y&&d.getMonth()===mo;
-   })
-   .sort((a,b)=>new Date(b.date)-new Date(a.date));
+const d=new Date();
+return transactions.filter(t=>{const x=new Date(t.date);return x.getMonth()==d.getMonth()&&x.getFullYear()==d.getFullYear()})
 }
 function spent(name){return monthTx().filter(t=>t.direction==='expense'&&t.category===name).reduce((a,b)=>a+Number(b.amount),0)}
 function totals(){
@@ -322,18 +317,6 @@ recurringRules=rec;
 function autoClassifyMerchant(m){const s=merchantSuggestion(m);return s&&s.samples>=2&&s.confidence>=70?s.category:null}
 function autoDetectRecurringType(m){const r=recurringRules[normalizeMerchant(m)];return r&&r.cadence==='חודשי'?'קבועה':null}
 
-function changeTxCategory(index,value){
- const rows=monthTx();
- const t=rows[index];
- if(!t)return;
- t.category=value;
- if(t.bankId){
-   const original=transactions.find(x=>String(x.bankId)===String(t.bankId));
-   if(original)original.category=value;
- }
- if(t.merchant)rememberMerchant(t.merchant,value);
- render();
-}
 function render(){
 const d=new Date(),m=mi(),t=totals(),s=score();
 dateText.textContent=d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
@@ -465,7 +448,7 @@ const t=c[0];receiptMerchant.value=t.merchant;receiptCategory.value=t.category;i
 alert(`נמצאה התאמה: ${t.merchant} • ${fmt(t.amount)} • ${t.category}`)
 }
 
-const OPEN_FINANCE_BACKEND = ''; // same-origin: Render serves both the app and API
+const OPEN_FINANCE_BACKEND = 'https://financial-manager-api-n18e.onrender.com';
 
 function unwrapList(data, preferredKeys=[]){
   if(Array.isArray(data)) return data;
