@@ -468,12 +468,11 @@ function txUniqueKey(t){
 function loadSpecificTxRules(){
   try{return JSON.parse(localStorage.getItem('txSpecificRules')||'{}')}catch(e){return{}}
 }
-function saveSpecificTxRule(t,field,value){
-  const rules=loadSpecificTxRules(),key=txUniqueKey(t);
+function saveSpecificTxRuleByKey(key,field,value){
+  const rules=loadSpecificTxRules();
   rules[key]=rules[key]||{};
   rules[key][field]=value;
   localStorage.setItem('txSpecificRules',JSON.stringify(rules));
-
   transactions.forEach(x=>{
     if(txUniqueKey(x)===key){
       if(field==='category')x.category=value;
@@ -482,6 +481,7 @@ function saveSpecificTxRule(t,field,value){
   });
   render();
 }
+
 function applyTxRule(t){
   // First apply the merchant/source-wide rule.
   const broad=loadTxRules()[txRuleKey(t)]||{};
@@ -507,51 +507,55 @@ function renderBank(){
   if(incomeBtn)incomeBtn.classList.toggle('active',bankView==='income');
   if(expenseBtn)expenseBtn.classList.toggle('active',bankView==='expense');
 
-  const rows=monthTx()
-    .map(applyTxRule)
+  const rows=monthTx().map(applyTxRule)
     .filter(t=>t.direction===bankView)
     .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
 
+  const cats=['דיור','מזון','תחבורה','דלק','תקשורת','ילדים','בריאות','ביטוחים','חובות','שוק ההון','בילויים','קניות','אחר'];
   const groups=[
-    {kind:'קבועה',title:bankView==='income'?'הכנסות קבועות':'הוצאות קבועות'},
-    {kind:'חד פעמי',title:bankView==='income'?'הכנסות לא קבועות':'הוצאות לא קבועות'}
+    {fixed:true,title:bankView==='income'?'הכנסות קבועות':'הוצאות קבועות'},
+    {fixed:false,title:bankView==='income'?'הכנסות לא קבועות':'הוצאות לא קבועות'}
   ];
 
-  const cats=['דיור','מזון','תחבורה','דלק','תקשורת','ילדים','בריאות','ביטוחים','חובות','שוק ההון','בילויים','קניות','אחר'];
-
   el.innerHTML=groups.map(g=>{
-    const list=rows.filter(t=>{
-      const k=String(t.kind||'');
-      return g.kind==='קבועה' ? k==='קבועה' : k!=='קבועה';
-    });
-
+    const list=rows.filter(t=>(String(t.kind||'')==='קבועה')===g.fixed);
     return `<div class="tx-section-title">${g.title}</div>`+
-      (list.length?list.map(t=>{
-        const key=txRuleKey(t);
-        const category=t.category||'אחר';
-        const frequency=String(t.kind||'')==='קבועה'?'קבועה':'חד פעמי';
-        return `<div class="item">
-          <div>
-            <b>${t.merchant||t.description||'תנועה'}</b>
-            <div class="muted">${t.date||''} • ${fmt(t.amount||0)}</div>
-            <div class="tx-edit">
-              <select id="scope-${String(t.bankId||'').replace(/[^a-zA-Z0-9_-]/g,'')}">
-                <option value="specific">רק התנועה הזו</option>
-                <option value="broad">כל התנועות מבית העסק</option>
-              </select>
-              <span></span>
-              <select onchange='(document.getElementById(${JSON.stringify("scope-"+String(t.bankId||"").replace(/[^a-zA-Z0-9_-]/g,""))}).value==="broad"?saveTxRuleByKey(${JSON.stringify(key)},"category",this.value):saveSpecificTxRule(${JSON.stringify({bankId:t.bankId,id:t.id,date:t.date,merchant:t.merchant,description:t.description,amount:t.amount})},"category",this.value))'>
-                ${cats.map(c=>`<option value="${c}" ${c===category?'selected':''}>${c}</option>`).join('')}
-              </select>
-              <select onchange='(document.getElementById(${JSON.stringify("scope-"+String(t.bankId||"").replace(/[^a-zA-Z0-9_-]/g,""))}).value==="broad"?saveTxRuleByKey(${JSON.stringify(key)},"frequency",this.value):saveSpecificTxRule(${JSON.stringify({bankId:t.bankId,id:t.id,date:t.date,merchant:t.merchant,description:t.description,amount:t.amount})},"frequency",this.value))'>
-                <option value="קבועה" ${frequency==='קבועה'?'selected':''}>קבועה</option>
-                <option value="חד פעמי" ${frequency==='חד פעמי'?'selected':''}>חד פעמי</option>
-              </select>
-            </div>
-          </div>
-        </div>`;
-      }).join(''):'<div class="muted">אין תנועות בקבוצה זו</div>');
+    (list.length?list.map((t,i)=>{
+      const sourceKey=txRuleKey(t);
+      const uniqueKey=txUniqueKey(t);
+      const category=t.category||'אחר';
+      const frequency=String(t.kind||'')==='קבועה'?'קבועה':'חד פעמי';
+      const sid=`scope_${bankView}_${g.fixed?'f':'n'}_${i}`;
+      return `<div class="item"><div style="width:100%">
+        <b>${t.merchant||t.description||'תנועה'}</b>
+        <div class="muted">${t.date||''} • ${fmt(t.amount||0)}</div>
+        <div class="tx-edit">
+          <select id="${sid}">
+            <option value="specific">רק התנועה הזו</option>
+            <option value="broad">כל התנועות מאותו מקור</option>
+          </select>
+          <select onchange="saveChosenTxChange('${sid}','${encodeURIComponent(sourceKey)}','${encodeURIComponent(uniqueKey)}','category',this.value)">
+            ${cats.map(c=>`<option value="${c}" ${c===category?'selected':''}>${c}</option>`).join('')}
+          </select>
+          <select onchange="saveChosenTxChange('${sid}','${encodeURIComponent(sourceKey)}','${encodeURIComponent(uniqueKey)}','frequency',this.value)">
+            <option value="קבועה" ${frequency==='קבועה'?'selected':''}>קבועה</option>
+            <option value="חד פעמי" ${frequency==='חד פעמי'?'selected':''}>חד פעמי</option>
+          </select>
+        </div>
+      </div></div>`;
+    }).join(''):'<div class="muted">אין תנועות בקבוצה זו</div>');
   }).join('');
+}
+
+function saveChosenTxChange(scopeId,sourceEncoded,uniqueEncoded,field,value){
+  const scope=document.getElementById(scopeId)?.value||'specific';
+  const sourceKey=decodeURIComponent(sourceEncoded);
+  const uniqueKey=decodeURIComponent(uniqueEncoded);
+  if(scope==='broad'){
+    saveTxRuleByKey(sourceKey,field,value);
+  }else{
+    saveSpecificTxRuleByKey(uniqueKey,field,value);
+  }
 }
 
 function showPage(id,b){
