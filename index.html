@@ -694,7 +694,10 @@ async function refreshAccountBalance(){
 
   if(!Number.isFinite(b) && Array.isArray(data?.balanceFields)){
     const rows=data.balanceFields.filter(x=>Number.isFinite(Number(x?.value)));
-    const preferred=rows.find(x=>/\.balanceAmount$/i.test(String(x?.field||'')));
+    const balanceRows=rows.filter(x=>/\.balanceAmount$/i.test(String(x?.field||'')));
+    // The API can return an empty/zero balance entry before the actual bank account.
+    // Prefer a non-zero balanceAmount; fall back to the first balanceAmount only if all are zero.
+    const preferred=balanceRows.find(x=>Number(x.value)!==0) || balanceRows[0];
     if(preferred)b=Number(preferred.value);
   }
 
