@@ -687,36 +687,34 @@ function accountBalanceValue(a){
 let liveAccountBalance=null;
 async function refreshAccountBalance(){
  try{
-  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/account-balance`,{cache:'no-store'});
+  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/account-balance?t=${Date.now()}`,{cache:'no-store'});
   if(!res.ok)throw new Error('balance');
 
   const data=await res.json();
   const fields=Array.isArray(data?.balanceFields)?data.balanceFields:[];
 
-  // Select the dynamic bank balance whose balanceType is "expected".
-  // No balance amount is hard-coded.
+  // Find the exact balances[index] whose balanceType is "expected".
   const expectedType=fields.find(x=>
-    /\.balanceType$/i.test(String(x?.field||'')) &&
-    String(x?.type||'').toLowerCase()==='expected'
+    /balanceType$/i.test(String(x?.field||'')) &&
+    String(x?.type??x?.value??'').trim().toLowerCase()==='expected'
   );
-
   if(!expectedType)throw new Error('expected balance not found');
 
-  const amountField=String(expectedType.field)
-    .replace(/\.balanceType$/i,'.balanceAmount');
+  // Keep the exact same path prefix, e.g.
+  // items.[1].balances.[2].balanceType -> items.[1].balances.[2].balanceAmount
+  const prefix=String(expectedType.field).replace(/balanceType$/i,'');
+  const amountRow=fields.find(x=>
+    String(x?.field||'')===prefix+'balanceAmount'
+  );
 
-  const amountRow=fields.find(x=>String(x?.field||'')===amountField);
   const b=Number(amountRow?.value);
-
   if(!Number.isFinite(b))throw new Error('expected amount not found');
 
   liveAccountBalance=b;
 
   const el=document.getElementById('premiumBalance');
   const st=document.getElementById('premiumBalanceStatus');
-
   if(el)el.textContent=fmt(b);
-
   if(st){
    const ok=b>=1000;
    st.textContent=ok?'יתרת תקציב':'חריגה';
