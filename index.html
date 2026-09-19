@@ -234,6 +234,21 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
   clear:both!important;
 }
 </style>
+
+<style>
+/* v2.6 stable dashboard additions */
+.income-budget-status-v26{margin-top:14px;padding:14px 16px;border-radius:16px;background:#f5faf8;border:1px solid rgba(12,91,78,.14)}
+.ibs26-head{display:flex;justify-content:space-between;gap:18px;align-items:center;font-weight:800}
+.ibs26-note{margin-top:7px;font-size:13px;color:#5b6864}
+.cumulative-balance-v26{width:100%;box-sizing:border-box;margin:24px 0 0;padding:20px 16px;border-radius:24px;background:linear-gradient(145deg,#fffdf8,#fff);border:1px solid rgba(184,137,47,.25);box-shadow:0 12px 30px rgba(7,24,45,.08);clear:both}
+.cb26-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}
+.cb26-title{font-size:20px;font-weight:900;color:#07182d}
+.cb26-value{font-weight:900;color:#8a651c;background:#fff4d7;padding:8px 12px;border-radius:14px}
+.cb26-chart{height:190px;display:flex;align-items:flex-end;gap:10px;border-bottom:1px solid rgba(7,24,45,.12);padding:8px 6px 24px}
+.cb26-col{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}
+.cb26-bar{width:100%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#f2d57f,#aa7a1f);box-shadow:0 5px 12px rgba(184,137,47,.18)}
+.cb26-label{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:10px;color:#657079}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1191,7 +1206,7 @@ refreshOpenFinanceStatus();
 <script>
 window.addEventListener('load',()=>{
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/service-worker.js').catch(console.warn);
+    navigator.serviceWorker.register('/service-worker.js?v=6').catch(console.warn);
   }
 });
 </script>
@@ -1231,51 +1246,81 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+
+
+<style>
+.income-budget-status{
+  margin-top:14px;padding:14px 16px;border-radius:16px;
+  background:#f8fbfa;border:1px solid rgba(12,91,78,.14);
+  display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap
+}
+.income-budget-status .ibs-title{font-weight:800;color:#173b36}
+.income-budget-status .ibs-value{font-weight:900}
+.income-budget-status .ibs-note{width:100%;font-size:13px;color:#596864}
+</style>
+
+
 <script>
 (function(){
- function n(v){return Number(v)||0}
- function fmt(v){return Math.round(v).toLocaleString('he-IL')}
- function addDashes(){
-   const roots=[...document.querySelectorAll('.budget-row,.budget-item,.budget-line,.budget-stat,.budget-summary-row')];
-   roots.forEach(r=>{
-     if(r.querySelector('.budget-dash'))return;
-     const kids=[...r.children];
-     if(kids.length>=2){
-       const dash=document.createElement('span');dash.className='budget-dash';dash.textContent='-';
-       r.insertBefore(dash,kids[kids.length-1]);
-     }
-   });
+ const V='v26';
+ const num=v=>Number(v)||0;
+ const fmt=v=>Math.round(Math.abs(v)).toLocaleString('he-IL');
+
+ function rows(){try{return typeof monthTx==='function'?monthTx():[]}catch(e){return[]}}
+ function target(){
+   try{const b=JSON.parse(localStorage.getItem('monthlyBudgetV1')||'null');if(b&&Number(b.incomeTarget))return Number(b.incomeTarget)}catch(e){}
+   try{return Number(DEFAULT_MONTHLY_BUDGET.incomeTarget)||20000}catch(e){return 20000}
  }
- function addMonthlyBalance(){
-   if(document.querySelector('.premium-monthly-balance'))return;
+
+ function budgetStatus(){
+   if(document.querySelector('.income-budget-status-v26'))return;
+   const label=[...document.querySelectorAll('*')].find(e=>(e.textContent||'').trim()==='תקציב הכנסות');
+   if(!label)return;
+   const row=label.closest('.budget-row,.budget-item,.budget-line,.budget-stat,.budget-summary-row')||label.parentElement;
+   if(!row)return;
+   const actual=rows().filter(t=>t.direction==='income').reduce((s,t)=>s+num(t.amount),0);
+   const goal=target(), diff=actual-goal;
+   const state=diff>0?'מעל היעד':diff<0?'מתחת ליעד':'היעד הושג';
+   const note=diff>0?`נכנסו ${fmt(diff)} ₪ יותר מהתקציב.`:diff<0?`חסרים ${fmt(diff)} ₪ להשלמת תקציב ההכנסה.`:'ההכנסה בפועל תואמת לתקציב.';
+   const el=document.createElement('div');el.className='income-budget-status-v26';
+   el.innerHTML=`<div class="ibs26-head"><span>עמידה בתקציב הכנסה</span><span>${state}</span></div><div class="ibs26-note">בפועל ${fmt(actual)} ₪ • ${note}</div>`;
+   row.insertAdjacentElement('afterend',el);
+ }
+
+ function cumulative(){
+   if(document.querySelector('.cumulative-balance-v26'))return;
    const attention=[...document.querySelectorAll('*')].find(e=>(e.textContent||'').trim()==='דורש תשומת לב');
    if(!attention)return;
    let card=attention.closest('.card,.panel,.section')||attention.parentElement;
-   /* Do not insert inside the score/donut's internal layout container. */
-   if(card && card.parentElement && getComputedStyle(card.parentElement).display==='flex'){
-     const p=card.parentElement;
-     if((p.textContent||'').includes('דורש תשומת לב')) card=p;
-   }
    if(!card)return;
-   const rows=typeof monthTx==='function'?monthTx():[];
-   const income=rows.filter(t=>t.direction==='income').reduce((s,t)=>s+n(t.amount),0);
-   const expense=rows.filter(t=>t.direction==='expense').reduce((s,t)=>s+n(t.amount),0);
-   const balance=income-expense;
-   const weekly=[1,2,3,4].map(w=>({w,inc:0,exp:0}));
-   rows.forEach(t=>{
-     const d=new Date(t.date); if(Number.isNaN(d.getTime()))return;
-     const w=Math.min(4,Math.floor((d.getDate()-1)/7)+1), x=weekly[w-1];
-     if(t.direction==='income')x.inc+=n(t.amount); else if(t.direction==='expense')x.exp+=n(t.amount);
+
+   // Walk out of internal flex/grid only when it clearly belongs to the attention module.
+   let host=card;
+   for(let i=0;i<2 && host.parentElement;i++){
+     const p=host.parentElement;
+     if((p.textContent||'').includes('דורש תשומת לב') && p.children.length<=4) host=p; else break;
+   }
+
+   const tx=rows().slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+   const daily={};
+   tx.forEach(t=>{
+     const d=String(t.date||'').slice(0,10); if(!d)return;
+     daily[d]=(daily[d]||0)+(t.direction==='income'?num(t.amount):-num(t.amount));
    });
-   const max=Math.max(1,...weekly.flatMap(x=>[x.inc,x.exp]));
-   const box=document.createElement('section');box.className='premium-monthly-balance';
-   box.innerHTML=`<div class="pmb-head"><div class="pmb-title">מאזן חודשי</div><div class="pmb-balance">יתרה נוכחית ${fmt(balance)} ₪</div></div>
-   <div class="pmb-chart">${weekly.map(x=>`<div class="pmb-week"><div class="pmb-bar pmb-income" style="height:${Math.max(3,x.inc/max*100)}%"></div><div class="pmb-bar pmb-expense" style="height:${Math.max(3,x.exp/max*100)}%"></div><div class="pmb-week-label">שבוע ${x.w}</div></div>`).join('')}</div>
-   <div class="pmb-legend"><span><i class="pmb-dot gold"></i>הכנסות</span><span><i class="pmb-dot dark"></i>הוצאות</span></div>`;
-   card.insertAdjacentElement('afterend',box);
+   let running=0;
+   const pts=Object.keys(daily).sort().map(d=>({d,v:(running+=daily[d])}));
+   if(!pts.length) pts.push({d:'החודש',v:0});
+   const min=Math.min(0,...pts.map(x=>x.v)), max=Math.max(1,...pts.map(x=>x.v));
+   const range=Math.max(1,max-min);
+   const box=document.createElement('section');box.className='cumulative-balance-v26';
+   box.innerHTML=`<div class="cb26-head"><div class="cb26-title">מאזן מצטבר</div><div class="cb26-value">${fmt(running)} ₪</div></div>
+   <div class="cb26-chart">${pts.map((p,i)=>`<div class="cb26-col"><div class="cb26-bar" style="height:${Math.max(4,((p.v-min)/range)*100)}%"></div><div class="cb26-label">${pts.length>8?(i%Math.ceil(pts.length/7)===0?p.d.slice(8,10):''):p.d.slice(8,10)||p.d}</div></div>`).join('')}</div>`;
+   host.insertAdjacentElement('afterend',box);
  }
- const run=()=>{addDashes();addMonthlyBalance()};
+
+ function run(){budgetStatus();cumulative()}
  window.addEventListener('load',run);
+ setTimeout(run,500); setTimeout(run,1500);
  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
