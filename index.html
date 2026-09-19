@@ -433,20 +433,27 @@ function manualCategory(desc){
 
 let bankView='income';
 
+function normalizeTxSource(v){
+  let s=String(v||'').toLowerCase().trim();
+  // Normalize spaces/punctuation so the same merchant is recognized consistently.
+  s=s.replace(/[״"'`]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+  return s;
+}
 function txRuleKey(t){
-  return String(t.merchant||t.description||'').trim().toLowerCase();
+  return normalizeTxSource(t.merchant||t.description||'');
 }
 function loadTxRules(){
   try{return JSON.parse(localStorage.getItem('txSourceRules')||'{}')}catch(e){return{}}
 }
-function saveTxRule(t,field,value){
-  const rules=loadTxRules(),key=txRuleKey(t);
+function saveTxRuleByKey(key,field,value){
+  key=normalizeTxSource(key);
   if(!key)return;
+  const rules=loadTxRules();
   rules[key]=rules[key]||{};
   rules[key][field]=value;
   localStorage.setItem('txSourceRules',JSON.stringify(rules));
 
-  // Apply immediately to every transaction from the same source.
+  // Apply to ALL existing transactions from this merchant/source.
   transactions.forEach(x=>{
     if(txRuleKey(x)===key){
       if(field==='category')x.category=value;
@@ -455,10 +462,36 @@ function saveTxRule(t,field,value){
   });
   render();
 }
+function txUniqueKey(t){
+  return String(t.bankId||t.id||`${t.date||''}|${t.merchant||t.description||''}|${t.amount||0}`);
+}
+function loadSpecificTxRules(){
+  try{return JSON.parse(localStorage.getItem('txSpecificRules')||'{}')}catch(e){return{}}
+}
+function saveSpecificTxRule(t,field,value){
+  const rules=loadSpecificTxRules(),key=txUniqueKey(t);
+  rules[key]=rules[key]||{};
+  rules[key][field]=value;
+  localStorage.setItem('txSpecificRules',JSON.stringify(rules));
+
+  transactions.forEach(x=>{
+    if(txUniqueKey(x)===key){
+      if(field==='category')x.category=value;
+      if(field==='frequency')x.kind=value;
+    }
+  });
+  render();
+}
 function applyTxRule(t){
-  const rule=loadTxRules()[txRuleKey(t)]||{};
-  if(rule.category)t.category=rule.category;
-  if(rule.frequency)t.kind=rule.frequency;
+  // First apply the merchant/source-wide rule.
+  const broad=loadTxRules()[txRuleKey(t)]||{};
+  if(broad.category)t.category=broad.category;
+  if(broad.frequency)t.kind=broad.frequency;
+
+  // Then a specific transaction override wins.
+  const specific=loadSpecificTxRules()[txUniqueKey(t)]||{};
+  if(specific.category)t.category=specific.category;
+  if(specific.frequency)t.kind=specific.frequency;
   return t;
 }
 function setBankView(v){
@@ -502,10 +535,15 @@ function renderBank(){
             <b>${t.merchant||t.description||'תנועה'}</b>
             <div class="muted">${t.date||''} • ${fmt(t.amount||0)}</div>
             <div class="tx-edit">
-              <select onchange='saveTxRule(${JSON.stringify({merchant:key})},"category",this.value)'>
+              <select id="scope-${String(t.bankId||'').replace(/[^a-zA-Z0-9_-]/g,'')}">
+                <option value="specific">רק התנועה הזו</option>
+                <option value="broad">כל התנועות מבית העסק</option>
+              </select>
+              <span></span>
+              <select onchange='(document.getElementById(${JSON.stringify("scope-"+String(t.bankId||"").replace(/[^a-zA-Z0-9_-]/g,""))}).value==="broad"?saveTxRuleByKey(${JSON.stringify(key)},"category",this.value):saveSpecificTxRule(${JSON.stringify({bankId:t.bankId,id:t.id,date:t.date,merchant:t.merchant,description:t.description,amount:t.amount})},"category",this.value))'>
                 ${cats.map(c=>`<option value="${c}" ${c===category?'selected':''}>${c}</option>`).join('')}
               </select>
-              <select onchange='saveTxRule(${JSON.stringify({merchant:key})},"frequency",this.value)'>
+              <select onchange='(document.getElementById(${JSON.stringify("scope-"+String(t.bankId||"").replace(/[^a-zA-Z0-9_-]/g,""))}).value==="broad"?saveTxRuleByKey(${JSON.stringify(key)},"frequency",this.value):saveSpecificTxRule(${JSON.stringify({bankId:t.bankId,id:t.id,date:t.date,merchant:t.merchant,description:t.description,amount:t.amount})},"frequency",this.value))'>
                 <option value="קבועה" ${frequency==='קבועה'?'selected':''}>קבועה</option>
                 <option value="חד פעמי" ${frequency==='חד פעמי'?'selected':''}>חד פעמי</option>
               </select>
