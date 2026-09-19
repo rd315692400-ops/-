@@ -690,7 +690,11 @@ async function refreshAccountBalance(){
   const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/account-balance`,{cache:'no-store'});
   if(!res.ok)throw new Error('balance');
   const data=await res.json();
-  const b=Number(data.balance);
+  let b=Number(data.balance);
+  if(!Number.isFinite(b) && Array.isArray(data.balanceFields)){
+   const hit=data.balanceFields.find(x=>Number.isFinite(Number(x?.value)));
+   if(hit)b=Number(hit.value);
+  }
   if(!Number.isFinite(b))throw new Error('balance');
   liveAccountBalance=b;
   const el=document.getElementById('premiumBalance');
