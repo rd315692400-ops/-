@@ -436,7 +436,7 @@ nav button{color:#8fa1b4;background:transparent;box-shadow:none;border:none}nav 
 <input id="txMerchant" placeholder="בית עסק / מקור">
 <input id="txAmount" type="number" step="0.01" placeholder="סכום">
 <select id="txDirection"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select>
-<select id="txCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="מזון השלמות">מזון השלמות</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
+<select id="txCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="מזון השלמות">מזון השלמות</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="גז">גז</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
 <select id="txKind"><option value="קבועה">קבועה</option><option value="חד פעמי">חד פעמי</option></select>
 <button onclick="addTransaction()">הוסף תנועה</button>
 </div>
@@ -447,7 +447,7 @@ nav button{color:#8fa1b4;background:transparent;box-shadow:none;border:none}nav 
 <b id="editTxInfo"></b>
 <select id="editDirection"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select>
 <select id="editFrequency"><option value="קבועה">קבועה</option><option value="חד פעמי">חד פעמי</option></select>
-<select id="editCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="מזון השלמות">מזון השלמות</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
+<select id="editCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="מזון השלמות">מזון השלמות</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="גז">גז</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
 <select id="editScope"><option value="one">רק התנועה בתאריך הזה</option><option value="all">כל התאריכים מאותו בית עסק / מקור</option></select>
 <button onclick="saveTxEdit()">שמור תיקון</button>
 </div>
@@ -721,7 +721,12 @@ budgetTable.innerHTML='<table><thead><tr><th>קטגוריה</th><th>סוג</th><
 categories.map(c=>`<tr><td>${c.name}</td><td>${c.type}</td><td>${fmt(c.budget)}</td><td>${fmt(spent(c.name))}</td><td>${fmt(c.budget-spent(c.name))}</td></tr>`).join('')+'</tbody></table>'
 }
 function renderTx(){
-txTable.innerHTML=[...transactions].reverse().map(t=>`<tr><td>${String(txNumberMap()[txUniqueKey(t)]||0).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
+const all=monthTx().slice().sort((a,b)=>{
+ const byDate=String(b.date||'').localeCompare(String(a.date||''));
+ if(byDate!==0)return byDate;
+ return txUniqueKey(b).localeCompare(txUniqueKey(a));
+});
+txTable.innerHTML=all.map((t,i)=>`<tr><td>${String(i+1).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
 }
 function renderSelects(){
 const o=categories.map(c=>`<option>${c.name}</option>`).join('');
@@ -829,7 +834,7 @@ const DEFAULT_MONTHLY_BUDGET={
   incomeTarget:20000,
   categories:{
     'דיור':4500,'מזון':3000,'מזון השלמות':1000,'חשמל':700,'מים':300,'ארנונה':500,
-    'דלק':1000,'תקשורת':350,'בריאות':500,'ביטוחים':500,'ביגוד והנעלה':800,
+    'דלק':1000,'גז':0,'תקשורת':350,'בריאות':500,'ביטוחים':500,'ביגוד והנעלה':800,
     'חינוך / מסגרות':1000,'בילויים':700,'קניות לבית':1000,'שוק ההון':1000,
     'בלת״ם':1050,'חיסכון':500
   }
@@ -946,7 +951,7 @@ function renderBank(){
       return byDate!==0 ? byDate : txUniqueKey(b).localeCompare(txUniqueKey(a));
     });
 
-  const cats=['דיור','מזון','מזון השלמות','חשמל','מים','ארנונה','תחבורה','דלק','תקשורת','ילדים','בריאות','ביטוחים','ביגוד והנעלה','חינוך / מסגרות','קניות לבית','חובות','שוק ההון','בילויים','קניות','אחר'];
+  const cats=['דיור','מזון','מזון השלמות','חשמל','מים','ארנונה','תחבורה','דלק','גז','תקשורת','ילדים','בריאות','ביטוחים','ביגוד והנעלה','חינוך / מסגרות','קניות לבית','חובות','שוק ההון','בילויים','קניות','אחר'];
   const groups=[
     {fixed:true,title:bankView==='income'?'הכנסות קבועות':'הוצאות קבועות'},
     {fixed:false,title:bankView==='income'?'הכנסות לא קבועות':'הוצאות לא קבועות'}
@@ -1383,5 +1388,24 @@ window.addEventListener('load',()=>{
 })();
 </script>
 
+<script id="gas-v32">
+(function(){
+ try{
+  const b=JSON.parse(localStorage.getItem('monthlyBudgetV1')||'null');
+  if(b&&b.categories&&!Object.prototype.hasOwnProperty.call(b.categories,'גז')){
+   const n={};
+   Object.entries(b.categories).forEach(([k,v])=>{n[k]=v;if(k==='דלק')n['גז']=0;});
+   if(!('גז' in n))n['גז']=0;
+   b.categories=n;localStorage.setItem('monthlyBudgetV1',JSON.stringify(b));
+  }
+  const c=JSON.parse(localStorage.getItem('categories')||'null');
+  if(Array.isArray(c)&&!c.some(x=>x&&x.name==='גז')){
+   const i=c.findIndex(x=>x&&x.name==='דלק');
+   c.splice(i>=0?i+1:c.length,0,{name:'גז',budget:0,type:'שוטפת'});
+   localStorage.setItem('categories',JSON.stringify(c));
+  }
+ }catch(e){}
+})();
+</script>
 </body>
 </html>
