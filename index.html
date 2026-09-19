@@ -136,6 +136,32 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
   margin-top:10px;font-size:12px;opacity:.82
 }
 </style>
+
+<style>
+/* v2.2 budget polish */
+.budget-chart-wrap{
+  width:100% !important;
+  max-width:none !important;
+  box-sizing:border-box;
+  margin:22px 0 0 !important;
+}
+.budget-chart{
+  width:100% !important;
+  min-height:190px;
+  gap:14px !important;
+}
+.budget-row,.budget-item,.budget-line,
+.budget-stat,.budget-summary-row{
+  gap:12px !important;
+}
+.budget-row strong,.budget-row b,.budget-row .amount,
+.budget-item strong,.budget-item b,.budget-item .amount,
+.budget-line strong,.budget-line b,.budget-line .amount,
+.budget-stat strong,.budget-stat b,.budget-stat .amount,
+.budget-summary-row strong,.budget-summary-row b,.budget-summary-row .amount{
+  margin-inline-start:10px !important;
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -168,8 +194,7 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 </div>
 
 <div class="grid g2">
-  <div class="card hero brand-coins">
-    <div><div class="label">מדד עמידה בתקציב</div><div class="metric" id="scoreLabel">86/100</div><div class="sub" id="scoreStatus">טוב</div></div>
+  <div class="metric" id="scoreLabel">86/100</div><div class="sub" id="scoreStatus">טוב</div></div>
     <div class="score" id="scoreRing"><span id="scoreNum">86</span></div>
   </div>
   <div class="card"><div class="label">כסף פנוי באמת</div><div class="metric pos" id="realFree">₪0</div><div class="sub">לאחר התחייבויות ויעד חיסכון</div></div>
