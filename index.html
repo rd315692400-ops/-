@@ -249,6 +249,73 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 .cb26-bar{width:100%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#f2d57f,#aa7a1f);box-shadow:0 5px 12px rgba(184,137,47,.18)}
 .cb26-label{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:10px;color:#657079}
 </style>
+
+<style id="premium-v30">
+:root{
+ --lux-navy:#061728;--lux-navy2:#0b2741;--lux-panel:#0d2136;--lux-panel2:#102a44;
+ --lux-gold:#d9aa4e;--lux-gold2:#f0cf83;--lux-text:#f7f9fc;--lux-muted:#aab7c5;
+ --lux-line:rgba(255,255,255,.10);--lux-green:#4bd28a;--lux-red:#ff6b70;
+}
+body{background:radial-gradient(circle at 10% 0,#153452 0,#07192b 35%,#04111e 100%) fixed;color:var(--lux-text)}
+.app{max-width:1180px;padding:20px 14px 108px}
+header{padding:4px 4px 14px} header h1{color:#fff}.sub{color:var(--lux-muted)}
+.badge{background:rgba(255,255,255,.06);border:1px solid var(--lux-line);color:#dfe8f1}
+.page-hero,.premium-hero{background:linear-gradient(135deg,#07192c,#0e2d4b);border:1px solid rgba(217,170,78,.45);box-shadow:0 18px 45px rgba(0,0,0,.22)}
+.page-hero{border-radius:26px;padding:22px 24px;margin-bottom:16px;position:relative;overflow:hidden}
+.page-hero:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(217,170,78,.08);left:-55px;top:-85px}
+.page-hero h2{margin:4px 0 4px;font-size:28px;color:var(--lux-gold2)} .page-hero p{margin:0;color:var(--lux-muted)}
+.page-kicker{font-size:12px;color:#c7a25d;letter-spacing:.5px}
+.card,.premium-stat,.premium-action,.answer,.tx-filter{
+ background:linear-gradient(145deg,rgba(15,39,64,.96),rgba(8,27,46,.98))!important;
+ border:1px solid var(--lux-line)!important;color:var(--lux-text)!important;
+ box-shadow:0 12px 32px rgba(0,0,0,.18)!important
+}
+.card{border-radius:22px;padding:18px}.section{color:var(--lux-gold2);font-size:20px}
+.label,.small,.premium-stat small{color:var(--lux-muted)!important}.metric,.premium-stat strong{color:#fff}
+.pos{color:var(--lux-green)!important}.neg{color:var(--lux-red)!important}.warn{color:#f4bd67!important}
+.row{padding:4px 0}.cat{border-bottom:1px solid var(--lux-line)}
+.progress{background:rgba(255,255,255,.08)}.progress div{background:linear-gradient(90deg,#bd8a2f,#f1cf7d)}
+button{background:linear-gradient(135deg,#e5bd68,#b77d25);color:#081727;border:1px solid rgba(255,255,255,.12);box-shadow:0 6px 18px rgba(0,0,0,.16)}
+button.secondary{background:rgba(255,255,255,.06);color:#f4f7fb;border:1px solid var(--lux-line)}
+input,select{background:#0a1c2f!important;color:#f7f9fc!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:13px}
+input::placeholder{color:#8292a4}
+table{color:#eef4fa} th{color:#e7c676;background:rgba(217,170,78,.08);white-space:nowrap} th,td{border-bottom:1px solid var(--lux-line)}
+tr:hover td{background:rgba(255,255,255,.025)}
+.alert{background:rgba(226,151,55,.10);border-color:rgba(226,151,55,.35);color:#fff}
+.alert.good{background:rgba(75,210,138,.09);border-color:rgba(75,210,138,.28)}
+.alert.bad{background:rgba(255,107,112,.09);border-color:rgba(255,107,112,.28)}
+.receipt{background:rgba(255,255,255,.035);border-color:rgba(217,170,78,.4)}
+nav{background:rgba(3,15,26,.94);border-top:1px solid rgba(217,170,78,.22);backdrop-filter:blur(18px)}
+nav button{color:#8fa1b4;background:transparent;box-shadow:none;border:none}nav button.active{color:#f0cf83}
+.premium-hero{border-radius:28px}.premium-title{color:var(--lux-gold2)}.premium-brand,.premium-sub{color:#bdc9d5}
+.premium-stat{border-radius:20px}.premium-action{border-radius:18px;color:#fff!important}.premium-action.gold{color:#07182d!important;background:linear-gradient(135deg,#f1d58f,#c58b31)!important}
+.attention-card{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:150px}
+.attention-copy{min-width:0}.score{flex:0 0 112px;width:112px;height:112px;background:conic-gradient(var(--lux-green) 0 86%,rgba(255,255,255,.1) 86%)}
+.score:after{background:#0b2238}.score span{color:#fff}
+.free-card{display:flex;flex-direction:column;justify-content:center}
+.form{gap:12px}.rule-row{gap:10px}
+.tx-section-title{color:var(--lux-gold2);font-size:19px;margin-top:22px}
+.item{background:rgba(255,255,255,.035)!important;border:1px solid var(--lux-line)!important;border-radius:16px!important;margin-bottom:10px!important}
+.ai input{background:#091d31!important}.answer{min-height:100px}
+#budget .card>.card{background:rgba(255,255,255,.025)!important;box-shadow:none!important}
+#bank .alert strong{color:#fff}
+.lux-budget-summary{display:grid;gap:0;margin-top:16px;border:1px solid var(--lux-line);border-radius:20px;overflow:hidden;background:rgba(255,255,255,.025)}
+.lux-budget-row{display:grid;grid-template-columns:minmax(155px,1fr) 26px minmax(125px,auto);gap:16px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--lux-line)}
+.lux-budget-row:last-child{border-bottom:none}.lux-budget-row .dash{text-align:center;color:#c4a15c;font-weight:900}.lux-budget-row b{text-align:left;font-size:18px;direction:rtl}
+.lux-income-status{margin-top:14px;padding:16px;border-radius:18px;border:1px solid rgba(75,210,138,.25);background:linear-gradient(135deg,rgba(17,87,62,.28),rgba(7,38,38,.25))}
+.lux-income-status .top{display:flex;justify-content:space-between;gap:16px;font-weight:800}.lux-income-status .state{color:var(--lux-green);font-size:18px}.lux-income-status .note{color:#b9c8d1;margin-top:7px;font-size:13px}
+.lux-chart-card{margin-top:18px;padding:18px;border-radius:22px;border:1px solid rgba(217,170,78,.32);background:linear-gradient(145deg,#091d31,#0d2a46)}
+.lux-chart-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}.lux-chart-title{font-weight:900;font-size:20px;color:#f0cf83}.lux-chart-value{font-weight:900;font-size:20px}
+.lux-chart-sub{font-size:12px;color:#9eb0c1;margin-bottom:12px}.lux-chart-wrap{position:relative;height:250px;border-bottom:1px solid rgba(255,255,255,.14);border-right:1px solid rgba(255,255,255,.10);overflow:hidden}
+.lux-chart-wrap svg{width:100%;height:100%;display:block}.lux-axis{display:flex;justify-content:space-between;color:#8799aa;font-size:11px;margin-top:8px}.lux-legend{display:flex;gap:16px;flex-wrap:wrap;color:#aab7c5;font-size:12px;margin-top:12px}.lux-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-inline-end:5px;background:#e2b655}
+@media(max-width:780px){
+ .app{padding-left:10px;padding-right:10px}.page-hero{padding:18px}.page-hero h2{font-size:24px}
+ .attention-card{min-height:132px}.score{width:94px;height:94px;flex-basis:94px}.score:after{width:68px;height:68px}
+ .lux-budget-row{grid-template-columns:minmax(125px,1fr) 18px minmax(105px,auto);gap:9px;padding:13px 12px}.lux-budget-row b{font-size:16px}
+ .lux-chart-wrap{height:210px}.nav{overflow-x:auto;grid-template-columns:repeat(8,minmax(62px,1fr))}
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -280,11 +347,20 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
   </div>
 </div>
 
-<div class="grid g2">
-  <div class="metric" id="scoreLabel">86/100</div><div class="sub" id="scoreStatus">טוב</div></div>
+<div class="grid g2 premium-overview" style="margin-top:18px">
+  <div class="card attention-card">
+    <div class="attention-copy">
+      <div class="label">מצב פיננסי חודשי</div>
+      <div class="metric" id="scoreLabel">86/100</div>
+      <div class="sub" id="scoreStatus">טוב</div>
+    </div>
     <div class="score" id="scoreRing"><span id="scoreNum">86</span></div>
   </div>
-  <div class="card"><div class="label">כסף פנוי באמת</div><div class="metric pos" id="realFree">₪0</div><div class="sub">לאחר התחייבויות ויעד חיסכון</div></div>
+  <div class="card free-card">
+    <div class="label">כסף פנוי באמת</div>
+    <div class="metric pos" id="realFree">₪0</div>
+    <div class="sub">לאחר התחייבויות ויעד חיסכון</div>
+  </div>
 </div>
 
 <div class="grid g3" style="margin-top:14px">
@@ -312,7 +388,7 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 </div>
 </section>
 
-<section id="budget" class="page">
+<section id="budget" class="page"><div class="page-hero"><div class="page-kicker">המנהל הפיננסי שלי</div><h2>תקציב</h2><p>תכנון, שליטה וחלוקה חכמה של התקציב</p></div>
 <div class="card">
 <h3 class="section">תקציב חודשי</h3>
 <div class="form">
@@ -340,7 +416,7 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 </div>
 </section>
 
-<section id="transactions" class="page">
+<section id="transactions" class="page"><div class="page-hero"><div class="page-kicker">המנהל הפיננסי שלי</div><h2>תנועות</h2><p>כל ההכנסות וההוצאות במקום אחד</p></div>
 <div class="card">
 <h3 class="section">תקציב חודשי</h3>
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -380,7 +456,7 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 </div>
 </section>
 
-<section id="receipts" class="page">
+<section id="receipts" class="page"><div class="page-hero"><div class="page-kicker">המנהל הפיננסי שלי</div><h2>חשבוניות</h2><p>שמירה והתאמה של מסמכים לתנועות</p></div>
 <div class="card">
 <h3 class="section">חשבוניות</h3>
 <div class="receipt">
@@ -401,11 +477,11 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 </div>
 </section>
 
-<section id="alerts" class="page">
+<section id="alerts" class="page"><div class="page-hero"><div class="page-kicker">המנהל הפיננסי שלי</div><h2>חריגות</h2><p>כל מה שדורש את תשומת הלב שלך</p></div>
 <div class="card"><h3 class="section">מרכז חריגות</h3><div id="alertsFull"></div></div>
 </section>
 
-<section id="debts" class="page">
+<section id="debts" class="page"><div class="page-hero"><div class="page-kicker">המנהל הפיננסי שלי</div><h2>חובות והלוואות</h2><p>תמונה ברורה של התחייבויות ותשלומים</p></div>
 <div class="card">
 <h3 class="section">חובות והלוואות</h3>
 <div class="form">
@@ -419,7 +495,7 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 </div>
 </section>
 
-<section id="bank" class="page">
+<section id="bank" class="page"><div class="page-hero"><div class="page-kicker">המנהל הפיננסי שלי</div><h2>בנק</h2><p>חיבור Open Finance ונתונים מסונכרנים</p></div>
 <div class="grid g2">
   <div class="card">
     <h3 class="section">חיבור בנק</h3>
@@ -451,7 +527,7 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 </div>
 </section>
 
-<section id="ai" class="page">
+<section id="ai" class="page"><div class="page-hero"><div class="page-kicker">המנהל הפיננסי שלי</div><h2>עוזר פיננסי</h2><p>תובנות מהנתונים שלך</p></div>
 <div class="card">
 <h3 class="section">עוזר פיננסי</h3>
 <div class="small">האבטיפוס מנתח את הנתונים המקומיים בלבד ולא מבצע פעולות כספיות.</div>
@@ -1211,118 +1287,101 @@ window.addEventListener('load',()=>{
 });
 </script>
 
-<script>
+
+
+
+
+
+
+
+
+
+<script id="premium-render-v30">
 (function(){
-  function moneyNum(v){ return Number(v)||0; }
-  function addBudgetChart(){
-    const candidates=[...document.querySelectorAll('h1,h2,h3,h4,div,span')];
-    const marker=candidates.find(el=>{
-      const t=(el.textContent||'').trim();
-      return t==='מודד עמידה בתקציב' || t==='מדד עמידה בתקציב';
+  const money=v=>new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:0}).format(Number(v||0));
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  window.renderBudget=function(){
+    const root=document.getElementById('monthlyBudgetPanel');
+    if(!root)return;
+    const b=loadMonthlyBudget();
+    const rows=monthTx().map(applyTxRule);
+    const income=rows.filter(t=>t.direction==='income').reduce((a,t)=>a+(Number(t.amount)||0),0);
+    const expenses=rows.filter(t=>t.direction==='expense').reduce((a,t)=>a+(Number(t.amount)||0),0);
+    const planned=Object.values(b.categories).reduce((a,v)=>a+(Number(v)||0),0);
+    const incomeDiff=income-b.incomeTarget;
+    const balance=b.incomeTarget-expenses;
+    const incomeState=incomeDiff>0?'מעל היעד':incomeDiff<0?'מתחת ליעד':'היעד הושג';
+    const incomeNote=incomeDiff>0?`נכנסו ${money(incomeDiff)} יותר מהיעד החודשי.`:incomeDiff<0?`חסרים ${money(Math.abs(incomeDiff))} להשלמת יעד ההכנסה.`:'ההכנסות בפועל תואמות בדיוק ליעד.';
+
+    const sorted=rows.slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+    const daily={};
+    sorted.forEach(t=>{
+      const d=String(t.date||'').slice(0,10); if(!d)return;
+      daily[d]=(daily[d]||0)+(t.direction==='income'?Number(t.amount||0):-Number(t.amount||0));
     });
-    if(!marker) return;
-    const host=marker.closest('.card,.panel,.section,.budget-card') || marker.parentElement;
-    if(!host || host.querySelector('.budget-chart-wrap')) return;
+    let run=0;
+    let pts=Object.keys(daily).sort().map(d=>({d,v:(run+=daily[d])}));
+    if(!pts.length)pts=[{d:'',v:0}];
+    const vals=pts.map(p=>p.v), min=Math.min(0,...vals), max=Math.max(0,...vals);
+    const span=Math.max(1,max-min), W=900,H=220,pad=18;
+    const x=i=>pts.length===1?W/2:pad+i*(W-2*pad)/(pts.length-1);
+    const y=v=>pad+(max-v)*(H-2*pad)/span;
+    const poly=pts.map((p,i)=>`${x(i)},${y(p.v)}`).join(' ');
+    const zeroY=y(0);
+    const fill=`${x(0)},${zeroY} ${poly} ${x(pts.length-1)},${zeroY}`;
+    const labels=pts.length<=6?pts:pts.filter((_,i)=>i===0||i===pts.length-1||i%Math.ceil(pts.length/5)===0);
 
-    const rows=(typeof monthTx==='function'?monthTx():[]);
-    const exp=rows.filter(t=>t.direction==='expense');
-    const totals={};
-    exp.forEach(t=>totals[t.category||'אחר']=(totals[t.category||'אחר']||0)+moneyNum(t.amount));
-    const top=Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,7);
-    if(!top.length) return;
-    const max=Math.max(...top.map(x=>x[1]),1);
+    root.innerHTML=`
+      <div class="lux-budget-summary">
+        <div class="lux-budget-row"><span>תקציב הכנסות</span><span class="dash">-</span><b>${money(b.incomeTarget)}</b></div>
+        <div class="lux-budget-row"><span>הכנסות בפועל</span><span class="dash">-</span><b class="pos">${money(income)}</b></div>
+        <div class="lux-budget-row"><span>${incomeDiff>=0?'עודף הכנסה':'חסר בהכנסה'}</span><span class="dash">-</span><b class="${incomeDiff>=0?'pos':'neg'}">${money(Math.abs(incomeDiff))}</b></div>
+        <div class="lux-budget-row"><span>הוצאות בפועל</span><span class="dash">-</span><b class="neg">${money(expenses)}</b></div>
+        <div class="lux-budget-row"><span>יתרה מול תקציב</span><span class="dash">-</span><b class="${balance>=0?'pos':'neg'}">${money(balance)}</b></div>
+        <div class="lux-budget-row"><span>תקציב מתוכנן לקטגוריות</span><span class="dash">-</span><b>${money(planned)}</b></div>
+      </div>
+      <div class="lux-income-status">
+        <div class="top"><span>עמידה בתקציב הכנסה</span><span class="state">${incomeState}</span></div>
+        <div class="note">הכנסה בפועל ${money(income)} מתוך יעד ${money(b.incomeTarget)}. ${incomeNote}</div>
+      </div>
+      <div class="lux-chart-card">
+        <div class="lux-chart-head"><div class="lux-chart-title">מאזן מצטבר לאורך החודש</div><div class="lux-chart-value ${run>=0?'pos':'neg'}">${money(run)}</div></div>
+        <div class="lux-chart-sub">הקו מציג את היתרה המצטברת לאחר כל יום: הכנסות מעלות את הקו והוצאות מורידות אותו.</div>
+        <div class="lux-chart-wrap">
+          <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="גרף מאזן מצטבר">
+            <defs><linearGradient id="goldArea30" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e5b95b" stop-opacity=".34"/><stop offset="100%" stop-color="#e5b95b" stop-opacity=".02"/></linearGradient></defs>
+            <line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="rgba(255,255,255,.22)" stroke-dasharray="5 6"/>
+            <polygon points="${fill}" fill="url(#goldArea30)"/>
+            <polyline points="${poly}" fill="none" stroke="#e5b95b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            ${pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.v)}" r="5" fill="#f2cf7c" stroke="#7b5516" stroke-width="2"><title>${esc(p.d)} • ${money(p.v)}</title></circle>`).join('')}
+          </svg>
+        </div>
+        <div class="lux-axis">${labels.map(p=>`<span>${esc((p.d||'').slice(8,10)||'החודש')}</span>`).join('')}</div>
+        <div class="lux-legend"><span><i class="lux-dot"></i>מאזן מצטבר</span><span>קו האפס מסמן מעבר מיתרה חיובית לשלילית</span></div>
+      </div>
+      <h3 class="section" style="margin-top:22px">תקציב לפי קטגוריה</h3>
+      <div style="overflow:auto"><table><thead><tr><th>קטגוריה</th><th>תקציב</th><th>נוצל</th><th>יתרה / חריגה</th></tr></thead><tbody>
+      ${Object.entries(b.categories).map(([cat,limit])=>{
+        const used=rows.filter(t=>t.direction==='expense'&&t.category===cat).reduce((a,t)=>a+(Number(t.amount)||0),0);
+        const d=limit-used;
+        return `<tr><td>${esc(cat)}</td><td><input type="number" min="0" value="${limit}" style="width:105px" onchange="saveBudgetValue(${JSON.stringify(cat)},this.value)"></td><td>${money(used)}</td><td class="${d>=0?'pos':'neg'}">${d>=0?'יתרה '+money(d):'חריגה '+money(Math.abs(d))}</td></tr>`;
+      }).join('')}
+      </tbody></table></div>`;
+  };
 
-    const wrap=document.createElement('div');
-    wrap.className='budget-chart-wrap';
-    wrap.innerHTML='<div class="budget-chart-title">הוצאות החודש לפי קטגוריה</div>'+
-      '<div class="budget-chart">'+top.map(([name,val])=>
-        `<div class="budget-chart-bar" title="${name}: ₪${Math.round(val).toLocaleString('he-IL')}" style="height:${Math.max(12,Math.round(val/max*100))}%"></div>`
-      ).join('')+'</div>'+
-      '<div class="budget-chart-caption"><span>'+top.map(x=>x[0]).slice(0,3).join(' • ')+'</span><span>₪ הוצאות בפועל</span></div>';
-    marker.insertAdjacentElement('afterend',wrap);
+  // Ensure the visible income-target input reflects the saved value.
+  const oldRender=window.render;
+  if(typeof oldRender==='function'){
+    window.render=function(){
+      oldRender();
+      const input=document.querySelector('#transactions input[onchange*="saveIncomeTarget"]');
+      if(input)input.value=loadMonthlyBudget().incomeTarget;
+      setTimeout(()=>window.renderBudget(),0);
+    };
   }
-  const obs=new MutationObserver(()=>addBudgetChart());
-  window.addEventListener('load',()=>{addBudgetChart();obs.observe(document.body,{childList:true,subtree:true});});
 })();
 </script>
 
-
-
-<style>
-.income-budget-status{
-  margin-top:14px;padding:14px 16px;border-radius:16px;
-  background:#f8fbfa;border:1px solid rgba(12,91,78,.14);
-  display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap
-}
-.income-budget-status .ibs-title{font-weight:800;color:#173b36}
-.income-budget-status .ibs-value{font-weight:900}
-.income-budget-status .ibs-note{width:100%;font-size:13px;color:#596864}
-</style>
-
-
-<script>
-(function(){
- const V='v26';
- const num=v=>Number(v)||0;
- const fmt=v=>Math.round(Math.abs(v)).toLocaleString('he-IL');
-
- function rows(){try{return typeof monthTx==='function'?monthTx():[]}catch(e){return[]}}
- function target(){
-   try{const b=JSON.parse(localStorage.getItem('monthlyBudgetV1')||'null');if(b&&Number(b.incomeTarget))return Number(b.incomeTarget)}catch(e){}
-   try{return Number(DEFAULT_MONTHLY_BUDGET.incomeTarget)||20000}catch(e){return 20000}
- }
-
- function budgetStatus(){
-   if(document.querySelector('.income-budget-status-v26'))return;
-   const label=[...document.querySelectorAll('*')].find(e=>(e.textContent||'').trim()==='תקציב הכנסות');
-   if(!label)return;
-   const row=label.closest('.budget-row,.budget-item,.budget-line,.budget-stat,.budget-summary-row')||label.parentElement;
-   if(!row)return;
-   const actual=rows().filter(t=>t.direction==='income').reduce((s,t)=>s+num(t.amount),0);
-   const goal=target(), diff=actual-goal;
-   const state=diff>0?'מעל היעד':diff<0?'מתחת ליעד':'היעד הושג';
-   const note=diff>0?`נכנסו ${fmt(diff)} ₪ יותר מהתקציב.`:diff<0?`חסרים ${fmt(diff)} ₪ להשלמת תקציב ההכנסה.`:'ההכנסה בפועל תואמת לתקציב.';
-   const el=document.createElement('div');el.className='income-budget-status-v26';
-   el.innerHTML=`<div class="ibs26-head"><span>עמידה בתקציב הכנסה</span><span>${state}</span></div><div class="ibs26-note">בפועל ${fmt(actual)} ₪ • ${note}</div>`;
-   row.insertAdjacentElement('afterend',el);
- }
-
- function cumulative(){
-   if(document.querySelector('.cumulative-balance-v26'))return;
-   const attention=[...document.querySelectorAll('*')].find(e=>(e.textContent||'').trim()==='דורש תשומת לב');
-   if(!attention)return;
-   let card=attention.closest('.card,.panel,.section')||attention.parentElement;
-   if(!card)return;
-
-   // Walk out of internal flex/grid only when it clearly belongs to the attention module.
-   let host=card;
-   for(let i=0;i<2 && host.parentElement;i++){
-     const p=host.parentElement;
-     if((p.textContent||'').includes('דורש תשומת לב') && p.children.length<=4) host=p; else break;
-   }
-
-   const tx=rows().slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
-   const daily={};
-   tx.forEach(t=>{
-     const d=String(t.date||'').slice(0,10); if(!d)return;
-     daily[d]=(daily[d]||0)+(t.direction==='income'?num(t.amount):-num(t.amount));
-   });
-   let running=0;
-   const pts=Object.keys(daily).sort().map(d=>({d,v:(running+=daily[d])}));
-   if(!pts.length) pts.push({d:'החודש',v:0});
-   const min=Math.min(0,...pts.map(x=>x.v)), max=Math.max(1,...pts.map(x=>x.v));
-   const range=Math.max(1,max-min);
-   const box=document.createElement('section');box.className='cumulative-balance-v26';
-   box.innerHTML=`<div class="cb26-head"><div class="cb26-title">מאזן מצטבר</div><div class="cb26-value">${fmt(running)} ₪</div></div>
-   <div class="cb26-chart">${pts.map((p,i)=>`<div class="cb26-col"><div class="cb26-bar" style="height:${Math.max(4,((p.v-min)/range)*100)}%"></div><div class="cb26-label">${pts.length>8?(i%Math.ceil(pts.length/7)===0?p.d.slice(8,10):''):p.d.slice(8,10)||p.d}</div></div>`).join('')}</div>`;
-   host.insertAdjacentElement('afterend',box);
- }
-
- function run(){budgetStatus();cumulative()}
- window.addEventListener('load',run);
- setTimeout(run,500); setTimeout(run,1500);
- new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
 </body>
 </html>
