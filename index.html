@@ -193,6 +193,47 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 .pmb-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:6px}
 .pmb-dot.gold{background:#c69a3a}.pmb-dot.dark{background:#35414c}
 </style>
+
+<style>
+/* v2.4 targeted mobile fix */
+
+/* Keep the original attention card layout intact on mobile. */
+@media (max-width:700px){
+  .premium-monthly-balance{clear:both;margin-top:24px!important}
+}
+
+/* Budget rows: force three visibly separated columns:
+   label | dash | amount */
+.budget-row,.budget-item,.budget-line,.budget-stat,.budget-summary-row{
+  display:grid!important;
+  grid-template-columns:minmax(145px,1fr) 28px minmax(125px,auto)!important;
+  align-items:center!important;
+  column-gap:16px!important;
+  width:100%!important;
+}
+.budget-row .budget-dash,.budget-item .budget-dash,.budget-line .budget-dash,
+.budget-stat .budget-dash,.budget-summary-row .budget-dash{
+  display:block!important;
+  text-align:center!important;
+  margin:0!important;
+}
+@media (max-width:520px){
+  .budget-row,.budget-item,.budget-line,.budget-stat,.budget-summary-row{
+    grid-template-columns:minmax(120px,1fr) 24px minmax(105px,auto)!important;
+    column-gap:10px!important;
+    font-size:clamp(14px,4vw,18px)!important;
+  }
+}
+
+/* New balance card must not participate in any parent flex row. */
+.premium-monthly-balance{
+  display:block!important;
+  position:relative!important;
+  float:none!important;
+  flex:none!important;
+  clear:both!important;
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1209,7 +1250,12 @@ window.addEventListener('load',()=>{
    if(document.querySelector('.premium-monthly-balance'))return;
    const attention=[...document.querySelectorAll('*')].find(e=>(e.textContent||'').trim()==='דורש תשומת לב');
    if(!attention)return;
-   const card=attention.closest('.card,.panel,.section')||attention.parentElement;
+   let card=attention.closest('.card,.panel,.section')||attention.parentElement;
+   /* Do not insert inside the score/donut's internal layout container. */
+   if(card && card.parentElement && getComputedStyle(card.parentElement).display==='flex'){
+     const p=card.parentElement;
+     if((p.textContent||'').includes('דורש תשומת לב')) card=p;
+   }
    if(!card)return;
    const rows=typeof monthTx==='function'?monthTx():[];
    const income=rows.filter(t=>t.direction==='income').reduce((s,t)=>s+n(t.amount),0);
