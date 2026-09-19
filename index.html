@@ -690,11 +690,16 @@ async function refreshAccountBalance(){
   const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/account-balance`,{cache:'no-store'});
   if(!res.ok)throw new Error('balance');
   const data=await res.json();
-  let b=Number(data.balance);
-  if(!Number.isFinite(b) && Array.isArray(data.balanceFields)){
-   const hit=data.balanceFields.find(x=>Number.isFinite(Number(x?.value)));
-   if(hit)b=Number(hit.value);
+  let b=Number(data?.balance);
+
+  if(!Number.isFinite(b) && Array.isArray(data?.balanceFields)){
+    const rows=data.balanceFields.filter(x=>Number.isFinite(Number(x?.value)));
+    const preferred=rows.find(x=>/interimAvailable/i.test(String(x?.field||'')))
+      || rows.find(x=>/closingBooked/i.test(String(x?.field||'')))
+      || rows.find(x=>/balance/i.test(String(x?.field||'')));
+    if(preferred)b=Number(preferred.value);
   }
+
   if(!Number.isFinite(b))throw new Error('balance');
   liveAccountBalance=b;
   const el=document.getElementById('premiumBalance');
@@ -713,6 +718,14 @@ async function refreshAccountBalance(){
   if(st)st.textContent='';
  }
 }
+
+// Live bank balance: refresh every minute and whenever the app becomes active again.
+if(!window.__accountBalanceTimer){
+  window.__accountBalanceTimer=setInterval(refreshAccountBalance,60000);
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')refreshAccountBalance();
+});
 
 function renderPremiumHome(){
   const root=document.getElementById('premiumHome'); if(!root)return;
