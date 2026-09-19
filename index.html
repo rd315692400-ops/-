@@ -330,7 +330,7 @@ nav button{color:#8fa1b4;background:transparent;box-shadow:none;border:none}nav 
     <div class="premium-brand">הניהול הפיננסי שלי</div>
     <div class="premium-title">החודש שלך, בשליטה.</div>
     <div class="premium-sub" id="premiumDateLine"></div>
-    <div class="premium-balance"><span>יתרה חודשית</span><b id="premiumBalance">₪0</b></div>
+    <div class="premium-balance"><span>יתרה בחשבון</span><b id="premiumBalance">₪0</b><div id="premiumBalanceStatus" style="margin-top:6px;font-weight:800"></div></div>
     <div class="premium-progress"><i id="premiumProgress"></i></div>
   </div>
   <div class="premium-stats">
@@ -658,6 +658,54 @@ function autoClassifyMerchant(m){const s=merchantSuggestion(m);return s&&s.sampl
 function autoDetectRecurringType(m){const r=recurringRules[normalizeMerchant(m)];return r&&r.cadence==='חודשי'?'קבועה':null}
 
 
+
+function accountBalanceValue(a){
+ const candidates=[
+  a?.balance,a?.currentBalance,a?.current_balance,a?.availableBalance,a?.available_balance,
+  a?.balances?.current,a?.balances?.available,a?.balances?.balance,
+  a?.accountBalance,a?.account_balance
+ ];
+ for(const v of candidates){
+  if(typeof v==='number'&&Number.isFinite(v))return v;
+  if(typeof v==='string'){
+   const n=Number(v.replace(/,/g,'').replace(/[^\d.-]/g,''));
+   if(Number.isFinite(n))return n;
+  }
+  if(v&&typeof v==='object'){
+   for(const k of ['amount','value','balance']){
+    const x=v[k];
+    if(typeof x==='number'&&Number.isFinite(x))return x;
+    if(typeof x==='string'){
+     const n=Number(x.replace(/,/g,'').replace(/[^\d.-]/g,''));
+     if(Number.isFinite(n))return n;
+    }
+   }
+  }
+ }
+ return null;
+}
+let liveAccountBalance=null;
+async function refreshAccountBalance(){
+ try{
+  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/accounts`,{cache:'no-store'});
+  if(!res.ok)return;
+  const data=await res.json();
+  const accounts=unwrapList(data,['accounts','items']);
+  if(!accounts.length)return;
+  const b=accountBalanceValue(accounts[0]);
+  if(b===null)return;
+  liveAccountBalance=b;
+  const el=document.getElementById('premiumBalance');
+  const st=document.getElementById('premiumBalanceStatus');
+  if(el)el.textContent=fmt(b);
+  if(st){
+   const ok=b>=1000;
+   st.textContent=ok?'יתרת תקציב':'חריגה';
+   st.style.color=ok?'var(--lux-green)':'var(--lux-red)';
+  }
+ }catch(e){console.warn('Account balance unavailable',e)}
+}
+
 function renderPremiumHome(){
   const root=document.getElementById('premiumHome'); if(!root)return;
   const rows=monthTx().map(applyTxRule);
@@ -669,7 +717,13 @@ function renderPremiumHome(){
   document.getElementById('premiumIncome').textContent=fmt(income);
   document.getElementById('premiumExpense').textContent=fmt(expense);
   document.getElementById('premiumSaving').textContent=fmt(saving);
-  document.getElementById('premiumBalance').textContent=fmt(balance);
+  if(liveAccountBalance===null){
+    document.getElementById('premiumBalance').textContent='טוען...';
+    const st=document.getElementById('premiumBalanceStatus'); if(st)st.textContent='';
+  }else{
+    document.getElementById('premiumBalance').textContent=fmt(liveAccountBalance);
+  }
+  refreshAccountBalance();
   document.getElementById('premiumBudgetPct').textContent=pct+'%';
   document.getElementById('premiumProgress').style.width=Math.min(100,pct)+'%';
   const now=new Date(), last=new Date(now.getFullYear(),now.getMonth()+1,0);
