@@ -452,6 +452,10 @@ nav button{color:#8fa1b4;background:transparent;box-shadow:none;border:none}nav 
 <button onclick="saveTxEdit()">שמור תיקון</button>
 </div>
 </div>
+<div class="tx-income-expense-tabs" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+<button id="txIncomeTab" onclick="setTxMainTab('income')">הכנסות</button>
+<button id="txExpenseTab" class="secondary" onclick="setTxMainTab('expense')">הוצאות</button>
+</div>
 <div style="overflow:auto;margin-top:16px"><table><thead><tr><th>מס׳</th><th>תאריך</th><th>מקור</th><th>סכום</th><th>סוג</th><th>קטגוריה</th></tr></thead><tbody id="txTable"></tbody></table></div>
 </div>
 </section>
@@ -720,13 +724,28 @@ function renderBudget(){
 budgetTable.innerHTML='<table><thead><tr><th>קטגוריה</th><th>סוג</th><th>תקציב</th><th>נוצל</th><th>נותר</th></tr></thead><tbody>'+
 categories.map(c=>`<tr><td>${c.name}</td><td>${c.type}</td><td>${fmt(c.budget)}</td><td>${fmt(spent(c.name))}</td><td>${fmt(c.budget-spent(c.name))}</td></tr>`).join('')+'</tbody></table>'
 }
+let txMainTab='income';
+
+function setTxMainTab(tab){
+ txMainTab=tab==='expense'?'expense':'income';
+ const inc=document.getElementById('txIncomeTab');
+ const exp=document.getElementById('txExpenseTab');
+ if(inc)inc.className=txMainTab==='income'?'':'secondary';
+ if(exp)exp.className=txMainTab==='expense'?'':'secondary';
+ renderTx();
+}
+
 function renderTx(){
-const all=monthTx().slice().sort((a,b)=>{
- const byDate=String(b.date||'').localeCompare(String(a.date||''));
- if(byDate!==0)return byDate;
- return txUniqueKey(b).localeCompare(txUniqueKey(a));
-});
-txTable.innerHTML=all.map((t,i)=>`<tr><td>${String(i+1).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
+ const all=monthTx().slice().sort((a,b)=>{
+  const byDate=String(b.date||'').localeCompare(String(a.date||''));
+  if(byDate!==0)return byDate;
+  return txUniqueKey(b).localeCompare(txUniqueKey(a));
+ });
+ const filtered=all.filter(t=>t.direction===txMainTab);
+ txTable.innerHTML=filtered.map((t,i)=>`<tr><td>${String(i+1).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('');
+ if(!filtered.length){
+  txTable.innerHTML=`<tr><td colspan="6" class="small" style="text-align:center;padding:22px">אין ${txMainTab==='income'?'הכנסות':'הוצאות'} להצגה בחודש הנוכחי.</td></tr>`;
+ }
 }
 function renderSelects(){
 const o=categories.map(c=>`<option>${c.name}</option>`).join('');
