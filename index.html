@@ -52,6 +52,16 @@ nav button.active{color:var(--text);font-weight:800}
 .rule-row{display:grid;grid-template-columns:1.4fr 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
 @media(max-width:780px){.rule-row{grid-template-columns:1fr 1fr}.rule-row button{grid-column:1/-1}}
 </style>
+
+<style>
+.tx-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.tx-filter{border:1px solid #dbe3ee;border-radius:14px;padding:12px;background:#fff;cursor:pointer;text-align:center}
+.tx-filter.active{outline:2px solid #111827}
+.tx-section-title{margin:16px 0 8px;font-size:18px;font-weight:800}
+.tx-edit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.tx-edit select{width:100%;padding:8px;border:1px solid #dbe3ee;border-radius:9px;background:#fff}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -421,12 +431,89 @@ function manualCategory(desc){
  return r?{category:r.category,kind:(categories.find(c=>c.name===r.category)||{}).type||'שוטפת'}:null;
 }
 
+let bankView='income';
+
+function txRuleKey(t){
+  return String(t.merchant||t.description||'').trim().toLowerCase();
+}
+function loadTxRules(){
+  try{return JSON.parse(localStorage.getItem('txSourceRules')||'{}')}catch(e){return{}}
+}
+function saveTxRule(t,field,value){
+  const rules=loadTxRules(),key=txRuleKey(t);
+  if(!key)return;
+  rules[key]=rules[key]||{};
+  rules[key][field]=value;
+  localStorage.setItem('txSourceRules',JSON.stringify(rules));
+
+  // Apply immediately to every transaction from the same source.
+  transactions.forEach(x=>{
+    if(txRuleKey(x)===key){
+      if(field==='category')x.category=value;
+      if(field==='frequency')x.kind=value;
+    }
+  });
+  render();
+}
+function applyTxRule(t){
+  const rule=loadTxRules()[txRuleKey(t)]||{};
+  if(rule.category)t.category=rule.category;
+  if(rule.frequency)t.kind=rule.frequency;
+  return t;
+}
+function setBankView(v){
+  bankView=v;
+  renderBank();
+}
 function renderBank(){
-bankStatus.textContent=bankConnection.connected?'מחובר':'לא מחובר';
-bankAccountName.textContent=bankConnection.connected?(bankConnection.accountName||'חשבון מחובר'):'—';
-bankLastSync.textContent=bankConnection.lastSync?new Date(bankConnection.lastSync).toLocaleString('he-IL'):'—';
-const now=new Date(), monthly=bankImported.filter(r=>{const d=new Date(r.date);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()}).sort((a,b)=>new Date(b.date)-new Date(a.date));
- bankTxTable.innerHTML=monthly.length?monthly.map(r=>`<tr><td>${r.date}</td><td>${r.description}</td><td>${fmt(r.amount)}</td><td>${r.direction==='income'?'הכנסה':'הוצאה'}</td><td>${r.category} / ${r.kind}</td></tr>`).join(''):'<tr><td colspan="5" class="small">עדיין לא בוצע סנכרון.</td></tr>'
+  const el=document.getElementById('bankRows');
+  if(!el)return;
+
+  const incomeBtn=document.getElementById('showIncomeBtn');
+  const expenseBtn=document.getElementById('showExpenseBtn');
+  if(incomeBtn)incomeBtn.classList.toggle('active',bankView==='income');
+  if(expenseBtn)expenseBtn.classList.toggle('active',bankView==='expense');
+
+  const rows=monthTx()
+    .map(applyTxRule)
+    .filter(t=>t.direction===bankView)
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+
+  const groups=[
+    {kind:'קבועה',title:bankView==='income'?'הכנסות קבועות':'הוצאות קבועות'},
+    {kind:'חד פעמי',title:bankView==='income'?'הכנסות לא קבועות':'הוצאות לא קבועות'}
+  ];
+
+  const cats=['דיור','מזון','תחבורה','דלק','תקשורת','ילדים','בריאות','ביטוחים','חובות','שוק ההון','בילויים','קניות','אחר'];
+
+  el.innerHTML=groups.map(g=>{
+    const list=rows.filter(t=>{
+      const k=String(t.kind||'');
+      return g.kind==='קבועה' ? k==='קבועה' : k!=='קבועה';
+    });
+
+    return `<div class="tx-section-title">${g.title}</div>`+
+      (list.length?list.map(t=>{
+        const key=txRuleKey(t);
+        const category=t.category||'אחר';
+        const frequency=String(t.kind||'')==='קבועה'?'קבועה':'חד פעמי';
+        return `<div class="item">
+          <div>
+            <b>${t.merchant||t.description||'תנועה'}</b>
+            <div class="muted">${t.date||''} • ${fmt(t.amount||0)}</div>
+            <div class="tx-edit">
+              <select onchange='saveTxRule(${JSON.stringify({merchant:key})},"category",this.value)'>
+                ${cats.map(c=>`<option value="${c}" ${c===category?'selected':''}>${c}</option>`).join('')}
+              </select>
+              <select onchange='saveTxRule(${JSON.stringify({merchant:key})},"frequency",this.value)'>
+                <option value="קבועה" ${frequency==='קבועה'?'selected':''}>קבועה</option>
+                <option value="חד פעמי" ${frequency==='חד פעמי'?'selected':''}>חד פעמי</option>
+              </select>
+            </div>
+          </div>
+        </div>`;
+      }).join(''):'<div class="muted">אין תנועות בקבוצה זו</div>');
+  }).join('');
 }
 
 function showPage(id,b){
@@ -639,10 +726,10 @@ async function syncOpenFinance(){
    const c=guessBankCategory(description,direction);
 
    freshImported.push({id,date,description,amount,direction,category:c.category,kind:c.kind});
-   freshTransactions.push({
+   freshTransactions.push(applyTxRule({
      bankId:id,date,merchant:description,amount,direction,
      category:c.category,kind:c.kind,source:'open-finance'
-   });
+   }));
   });
 
   bankImported=freshImported;
