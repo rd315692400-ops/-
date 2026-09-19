@@ -62,6 +62,47 @@ nav button.active{color:var(--text);font-weight:800}
 .tx-edit select{width:100%;padding:8px;border:1px solid #dbe3ee;border-radius:9px;background:#fff}
 </style>
 
+
+<style>
+:root{--premium-navy:#07182d;--premium-navy2:#0d2745;--premium-gold:#d8aa4b;--premium-soft:#f4f7fb}
+body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
+.premium-hero{
+ background:linear-gradient(135deg,var(--premium-navy),var(--premium-navy2));
+ color:#fff;border-radius:28px;padding:24px;margin-bottom:18px;position:relative;overflow:hidden;
+ box-shadow:0 18px 45px rgba(7,24,45,.18)
+}
+.premium-hero:before,.premium-hero:after{
+ content:"";position:absolute;border-radius:50%;background:rgba(216,170,75,.13)
+}
+.premium-hero:before{width:180px;height:180px;left:-55px;top:-75px}
+.premium-hero:after{width:120px;height:120px;right:-30px;bottom:-55px}
+.premium-brand{font-size:13px;opacity:.78;letter-spacing:.4px}
+.premium-title{font-size:28px;font-weight:900;margin:5px 0 2px}
+.premium-sub{font-size:13px;opacity:.75}
+.premium-balance{margin-top:24px}
+.premium-balance span{display:block;font-size:13px;opacity:.75}
+.premium-balance b{font-size:36px;line-height:1.15}
+.premium-progress{height:9px;background:rgba(255,255,255,.15);border-radius:20px;overflow:hidden;margin-top:17px}
+.premium-progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e8c675,var(--premium-gold));border-radius:20px}
+.premium-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0 18px}
+.premium-stat{background:#fff;border:1px solid #e8edf3;border-radius:20px;padding:16px;box-shadow:0 8px 22px rgba(25,45,70,.06)}
+.premium-stat small{display:block;color:#738197;margin-bottom:7px}
+.premium-stat strong{font-size:20px;color:#14263d}
+.premium-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+.premium-action{border:0;border-radius:18px;padding:17px 10px;background:#fff;color:#14263d;font-weight:800;box-shadow:0 7px 20px rgba(25,45,70,.07)}
+.premium-action .ico{font-size:22px;display:block;margin-bottom:5px}
+.premium-action.gold{background:linear-gradient(135deg,#f5dc9d,#d8aa4b);color:#172238}
+@media(min-width:720px){.premium-stats{grid-template-columns:repeat(4,1fr)}.premium-actions{grid-template-columns:repeat(4,1fr)}}
+</style>
+
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="theme-color" content="#07182d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="המנהל הפיננסי שלי">
 </head>
 <body>
 <div class="app">
@@ -71,6 +112,28 @@ nav button.active{color:var(--text);font-weight:800}
 </header>
 
 <section id="home" class="page active">
+<div id="premiumHome">
+  <div class="premium-hero">
+    <div class="premium-brand">הניהול הפיננסי שלי</div>
+    <div class="premium-title">החודש שלך, בשליטה.</div>
+    <div class="premium-sub" id="premiumDateLine"></div>
+    <div class="premium-balance"><span>יתרה חודשית</span><b id="premiumBalance">₪0</b></div>
+    <div class="premium-progress"><i id="premiumProgress"></i></div>
+  </div>
+  <div class="premium-stats">
+    <div class="premium-stat"><small>הכנסות</small><strong id="premiumIncome">₪0</strong></div>
+    <div class="premium-stat"><small>הוצאות</small><strong id="premiumExpense">₪0</strong></div>
+    <div class="premium-stat"><small>חיסכון</small><strong id="premiumSaving">₪0</strong></div>
+    <div class="premium-stat"><small>ניצול תקציב</small><strong id="premiumBudgetPct">0%</strong></div>
+  </div>
+  <div class="premium-actions">
+    <button class="premium-action gold" onclick="showPage('transactions')"><span class="ico">◫</span>תקציב</button>
+    <button class="premium-action" onclick="showPage('transactions')"><span class="ico">↕</span>תנועות</button>
+    <button class="premium-action" onclick="showPage('transactions');setBankView('income')"><span class="ico">＋</span>הכנסות</button>
+    <button class="premium-action" onclick="showPage('transactions');setBankView('expense')"><span class="ico">−</span>הוצאות</button>
+  </div>
+</div>
+
 <div class="grid g2">
   <div class="card hero brand-coins">
     <div><div class="label">מדד עמידה בתקציב</div><div class="metric" id="scoreLabel">86/100</div><div class="sub" id="scoreStatus">טוב</div></div>
@@ -134,6 +197,14 @@ nav button.active{color:var(--text);font-weight:800}
 
 <section id="transactions" class="page">
 <div class="card">
+<h3 class="section">תקציב חודשי</h3>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+<label>תקציב הכנסות</label>
+<input type="number" value="20000" style="max-width:140px" onchange="saveIncomeTarget(this.value)">
+</div>
+<div id="monthlyBudgetPanel"></div>
+</div>
+<div class="card">
 <h3 class="section">תנועות</h3>
 <div style="display:flex;gap:8px;margin-bottom:16px">
 <button onclick="document.getElementById('addTxPane').style.display='grid';document.getElementById('editTxPane').style.display='none'">הוספת תנועה חדשה</button>
@@ -144,7 +215,7 @@ nav button.active{color:var(--text);font-weight:800}
 <input id="txMerchant" placeholder="בית עסק / מקור">
 <input id="txAmount" type="number" step="0.01" placeholder="סכום">
 <select id="txDirection"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select>
-<select id="txCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
+<select id="txCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="מזון השלמות">מזון השלמות</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
 <select id="txKind"><option value="קבועה">קבועה</option><option value="חד פעמי">חד פעמי</option></select>
 <button onclick="addTransaction()">הוסף תנועה</button>
 </div>
@@ -155,7 +226,7 @@ nav button.active{color:var(--text);font-weight:800}
 <b id="editTxInfo"></b>
 <select id="editDirection"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select>
 <select id="editFrequency"><option value="קבועה">קבועה</option><option value="חד פעמי">חד פעמי</option></select>
-<select id="editCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
+<select id="editCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="מזון השלמות">מזון השלמות</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
 <select id="editScope"><option value="one">רק התנועה בתאריך הזה</option><option value="all">כל התאריכים מאותו בית עסק / מקור</option></select>
 <button onclick="saveTxEdit()">שמור תיקון</button>
 </div>
@@ -361,7 +432,28 @@ recurringRules=rec;
 function autoClassifyMerchant(m){const s=merchantSuggestion(m);return s&&s.samples>=2&&s.confidence>=70?s.category:null}
 function autoDetectRecurringType(m){const r=recurringRules[normalizeMerchant(m)];return r&&r.cadence==='חודשי'?'קבועה':null}
 
+
+function renderPremiumHome(){
+  const root=document.getElementById('premiumHome'); if(!root)return;
+  const rows=monthTx().map(applyTxRule);
+  const income=rows.filter(t=>t.direction==='income').reduce((a,t)=>a+(Number(t.amount)||0),0);
+  const expense=rows.filter(t=>t.direction==='expense').reduce((a,t)=>a+(Number(t.amount)||0),0);
+  const budget=(typeof loadMonthlyBudget==='function'?loadMonthlyBudget().incomeTarget:20000)||20000;
+  const saving=income-expense, balance=budget-expense;
+  const pct=Math.max(0,Math.round(expense/budget*100));
+  document.getElementById('premiumIncome').textContent=fmt(income);
+  document.getElementById('premiumExpense').textContent=fmt(expense);
+  document.getElementById('premiumSaving').textContent=fmt(saving);
+  document.getElementById('premiumBalance').textContent=fmt(balance);
+  document.getElementById('premiumBudgetPct').textContent=pct+'%';
+  document.getElementById('premiumProgress').style.width=Math.min(100,pct)+'%';
+  const now=new Date(), last=new Date(now.getFullYear(),now.getMonth()+1,0);
+  const days=Math.max(0,last.getDate()-now.getDate());
+  document.getElementById('premiumDateLine').textContent=`${now.toLocaleDateString('he-IL')} • ${days} ימים לסוף החודש`;
+}
 function render(){
+  setTimeout(renderPremiumHome,0);
+  setTimeout(renderBudget,0);
 const d=new Date(),m=mi(),t=totals(),s=score();
 dateText.textContent=d.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
 dayInfo.textContent=`יום ${m.day} מתוך ${m.total} • ${m.left} ימים לסוף החודש`;
@@ -511,9 +603,65 @@ function applyTxRule(t){
   return t;
 }
 
+
+const DEFAULT_MONTHLY_BUDGET={
+  incomeTarget:20000,
+  categories:{
+    'דיור':4500,'מזון':3000,'מזון השלמות':1000,'חשמל':700,'מים':300,'ארנונה':500,
+    'דלק':1000,'תקשורת':350,'בריאות':500,'ביטוחים':500,'ביגוד והנעלה':800,
+    'חינוך / מסגרות':1000,'בילויים':700,'קניות לבית':1000,'שוק ההון':1000,
+    'בלת״ם':1050,'חיסכון':500
+  }
+};
+function loadMonthlyBudget(){
+  try{return JSON.parse(localStorage.getItem('monthlyBudgetV1'))||JSON.parse(JSON.stringify(DEFAULT_MONTHLY_BUDGET))}
+  catch(e){return JSON.parse(JSON.stringify(DEFAULT_MONTHLY_BUDGET))}
+}
+function saveBudgetValue(cat,val){
+  const b=loadMonthlyBudget(); b.categories[cat]=Math.max(0,Number(val)||0);
+  localStorage.setItem('monthlyBudgetV1',JSON.stringify(b)); renderBudget();
+}
+function saveIncomeTarget(val){
+  const b=loadMonthlyBudget(); b.incomeTarget=Math.max(0,Number(val)||0);
+  localStorage.setItem('monthlyBudgetV1',JSON.stringify(b)); renderBudget();
+}
+function renderBudget(){
+  const root=document.getElementById('monthlyBudgetPanel'); if(!root)return;
+  const b=loadMonthlyBudget();
+  const rows=monthTx().map(applyTxRule);
+  const income=rows.filter(t=>t.direction==='income').reduce((a,t)=>a+(Number(t.amount)||0),0);
+  const expenses=rows.filter(t=>t.direction==='expense').reduce((a,t)=>a+(Number(t.amount)||0),0);
+  const planned=Object.values(b.categories).reduce((a,v)=>a+(Number(v)||0),0);
+  const incomeDiff=income-b.incomeTarget;
+  const balance=b.incomeTarget-expenses;
+  root.innerHTML=`
+    <div class="grid">
+      <div class="kpi"><span>תקציב הכנסות</span><b>${fmt(b.incomeTarget)}</b></div>
+      <div class="kpi"><span>הכנסות בפועל</span><b>${fmt(income)}</b></div>
+      <div class="kpi"><span>${incomeDiff>=0?'עודף הכנסה':'חסר בהכנסה'}</span><b>${fmt(Math.abs(incomeDiff))}</b></div>
+      <div class="kpi"><span>הוצאות בפועל</span><b>${fmt(expenses)}</b></div>
+      <div class="kpi"><span>יתרה מול 20,000</span><b>${fmt(balance)}</b></div>
+      <div class="kpi"><span>תקציב מתוכנן לקטגוריות</span><b>${fmt(planned)}</b></div>
+    </div>
+    <h3 class="section" style="margin-top:18px">תקציב לפי קטגוריה</h3>
+    <div style="overflow:auto"><table><thead><tr><th>קטגוריה</th><th>תקציב</th><th>נוצל</th><th>יתרה / חריגה</th></tr></thead><tbody>
+    ${Object.entries(b.categories).map(([cat,limit])=>{
+      const used=rows.filter(t=>t.direction==='expense' && t.category===cat).reduce((a,t)=>a+(Number(t.amount)||0),0);
+      const d=limit-used;
+      return `<tr><td>${cat}</td><td><input type="number" min="0" value="${limit}" style="width:95px" onchange="saveBudgetValue(${JSON.stringify(cat)},this.value)"></td><td>${fmt(used)}</td><td>${d>=0?'יתרה '+fmt(d):'חריגה '+fmt(Math.abs(d))}</td></tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
 function txNumberMap(){
-  const all=monthTx().slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  const map={}; all.forEach((t,i)=>map[txUniqueKey(t)]=i+1); return map;
+  // Newest transaction first; numbers are unique, start at 001, and 000 is never used.
+  const all=monthTx().slice().sort((a,b)=>{
+    const byDate=String(b.date||'').localeCompare(String(a.date||''));
+    if(byDate!==0)return byDate;
+    return txUniqueKey(b).localeCompare(txUniqueKey(a));
+  });
+  const map={};
+  all.forEach((t,i)=>{ map[txUniqueKey(t)]=i+1; });
+  return map;
 }
 function txByNumber(n){
   const map=txNumberMap();
@@ -572,9 +720,12 @@ function renderBank(){
 
   const rows=monthTx().map(applyTxRule)
     .filter(t=>t.direction===bankView)
-    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+    .sort((a,b)=>{
+      const byDate=String(b.date||'').localeCompare(String(a.date||''));
+      return byDate!==0 ? byDate : txUniqueKey(b).localeCompare(txUniqueKey(a));
+    });
 
-  const cats=['דיור','מזון','תחבורה','דלק','תקשורת','ילדים','בריאות','ביטוחים','חובות','שוק ההון','בילויים','קניות','אחר'];
+  const cats=['דיור','מזון','מזון השלמות','חשמל','מים','ארנונה','תחבורה','דלק','תקשורת','ילדים','בריאות','ביטוחים','ביגוד והנעלה','חינוך / מסגרות','קניות לבית','חובות','שוק ההון','בילויים','קניות','אחר'];
   const groups=[
     {fixed:true,title:bankView==='income'?'הכנסות קבועות':'הוצאות קבועות'},
     {fixed:false,title:bankView==='income'?'הכנסות לא קבועות':'הוצאות לא קבועות'}
@@ -905,6 +1056,14 @@ txDate.value=new Date().toISOString().slice(0,10);
 receiptDate.value=new Date().toISOString().slice(0,10);
 render();
 refreshOpenFinanceStatus();
+</script>
+
+<script>
+window.addEventListener('load',()=>{
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/service-worker.js').catch(console.warn);
+  }
+});
 </script>
 </body>
 </html>
