@@ -694,9 +694,7 @@ async function refreshAccountBalance(){
 
   if(!Number.isFinite(b) && Array.isArray(data?.balanceFields)){
     const rows=data.balanceFields.filter(x=>Number.isFinite(Number(x?.value)));
-    const preferred=rows.find(x=>/interimAvailable/i.test(String(x?.field||'')))
-      || rows.find(x=>/closingBooked/i.test(String(x?.field||'')))
-      || rows.find(x=>/balance/i.test(String(x?.field||'')));
+    const preferred=rows.find(x=>/\.balanceAmount$/i.test(String(x?.field||'')));
     if(preferred)b=Number(preferred.value);
   }
 
