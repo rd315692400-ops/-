@@ -605,6 +605,23 @@ async function refreshOpenFinanceStatus(){
   render()
  }catch(e){console.warn('Open Finance status unavailable',e)}
 }
+function safeShape(v,depth=0){
+ if(depth>2)return typeof v;
+ if(v===null)return 'null';
+ if(Array.isArray(v))return {type:'array',length:v.length,sample:v.length?safeShape(v[0],depth+1):null};
+ if(typeof v==='object'){const o={};for(const [k,x] of Object.entries(v)){if(/account|user|org|id|token|secret|number|iban|email|phone/i.test(k))continue;o[k]=safeShape(x,depth+1)}return o}
+ return typeof v;
+}
+async function diagnoseOpenFinance(){
+ try{
+  const res=await fetch('/api/transactions',{cache:'no-store'});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const data=await res.json(),rows=unwrapList(data,['transactions','items','results']);
+  const txt=JSON.stringify(rows.length?safeShape(rows[0]):safeShape(data),null,2);
+  await navigator.clipboard.writeText(txt);
+  alert('האבחון הצליח. הועתקו רק שמות השדות וסוגי הנתונים, ללא ערכים. הדבק לי כאן את הטקסט שהועתק.');
+ }catch(e){alert('האבחון נכשל: '+e.message)}
+}
 async function syncOpenFinance(){
  try{
   const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/transactions`,{cache:'no-store'});
