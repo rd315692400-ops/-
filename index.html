@@ -687,13 +687,11 @@ function accountBalanceValue(a){
 let liveAccountBalance=null;
 async function refreshAccountBalance(){
  try{
-  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/accounts`,{cache:'no-store'});
-  if(!res.ok)return;
+  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/account-balance`,{cache:'no-store'});
+  if(!res.ok)throw new Error('balance');
   const data=await res.json();
-  const accounts=unwrapList(data,['accounts','items']);
-  if(!accounts.length)return;
-  const b=accountBalanceValue(accounts[0]);
-  if(b===null)return;
+  const b=Number(data.balance);
+  if(!Number.isFinite(b))throw new Error('balance');
   liveAccountBalance=b;
   const el=document.getElementById('premiumBalance');
   const st=document.getElementById('premiumBalanceStatus');
@@ -701,9 +699,15 @@ async function refreshAccountBalance(){
   if(st){
    const ok=b>=1000;
    st.textContent=ok?'יתרת תקציב':'חריגה';
-   st.style.color=ok?'var(--lux-green)':'var(--lux-red)';
+   st.style.color=ok?'#138a55':'#c62828';
   }
- }catch(e){console.warn('Account balance unavailable',e)}
+ }catch(e){
+  console.warn('Account balance unavailable',e);
+  const el=document.getElementById('premiumBalance');
+  const st=document.getElementById('premiumBalanceStatus');
+  if(el)el.textContent='לא זמין';
+  if(st)st.textContent='';
+ }
 }
 
 function renderPremiumHome(){
