@@ -490,7 +490,7 @@ const t=c[0];receiptMerchant.value=t.merchant;receiptCategory.value=t.category;i
 alert(`נמצאה התאמה: ${t.merchant} • ${fmt(t.amount)} • ${t.category}`)
 }
 
-const OPEN_FINANCE_BACKEND = 'https://financial-manager-api-n18e.onrender.com'; // fixed Render API
+const OPEN_FINANCE_BACKEND = ''; // same-origin: app and API are served by Render
 
 function unwrapList(data, preferredKeys=[]){
   if(Array.isArray(data)) return data;
@@ -607,7 +607,7 @@ async function refreshOpenFinanceStatus(){
 }
 async function syncOpenFinance(){
  try{
-  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/transactions?fresh=${Date.now()}`,{cache:'no-store'});
+  const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/transactions`,{cache:'no-store'});
   if(!res.ok)throw new Error(`transactions ${res.status}`);
   const data=await res.json(),rows=unwrapList(data,['transactions','items','results']);
   let added=0,updated=0;
@@ -640,7 +640,7 @@ async function syncOpenFinance(){
   alert(rows.length?`נמצאו ${rows.length} תנועות • נוספו ${added} חדשות • עודכנו ${updated}`:'החיבור עובד, אך לא התקבלו תנועות להצגה.');
  }catch(e){
   console.error(e);
-  alert('השרת עצמו פעיל, אבל הדפדפן לא הצליח לקרוא את התנועות. פתח את המערכת מכתובת Render ורענן.');
+  alert('לא ניתן למשוך כרגע את התנועות מהשרת.');
  }
 }
 
