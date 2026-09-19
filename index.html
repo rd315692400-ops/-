@@ -135,18 +135,32 @@ nav button.active{color:var(--text);font-weight:800}
 <section id="transactions" class="page">
 <div class="card">
 <h3 class="section">תנועות</h3>
-<div class="form">
+<div style="display:flex;gap:8px;margin-bottom:16px">
+<button onclick="document.getElementById('addTxPane').style.display='grid';document.getElementById('editTxPane').style.display='none'">הוספת תנועה חדשה</button>
+<button class="secondary" onclick="document.getElementById('editTxPane').style.display='grid';document.getElementById('addTxPane').style.display='none'">תיקון תנועה</button>
+</div>
+<div id="addTxPane" class="form" style="display:grid">
 <input id="txDate" type="date">
 <input id="txMerchant" placeholder="בית עסק / מקור">
 <input id="txAmount" type="number" step="0.01" placeholder="סכום">
 <select id="txDirection"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select>
-<select id="txCategory"></select>
-<select id="txKind"><option>שוטפת</option><option>קבועה</option><option>תשלומים</option><option>בלת״ם</option><option>שוק ההון</option></select>
+<select id="txCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
+<select id="txKind"><option value="קבועה">קבועה</option><option value="חד פעמי">חד פעמי</option></select>
 <button onclick="addTransaction()">הוסף תנועה</button>
-<button class="secondary" onclick="suggestCategory()">הצע קטגוריה</button>
-<button class="secondary" onclick="loadDemo()">טען דמו</button>
 </div>
-<div style="overflow:auto;margin-top:16px"><table><thead><tr><th>תאריך</th><th>מקור</th><th>סכום</th><th>סוג</th><th>קטגוריה</th></tr></thead><tbody id="txTable"></tbody></table></div>
+<div id="editTxPane" class="form" style="display:none">
+<input id="editTxNumber" type="number" min="1" placeholder="מספר תנועה">
+<button onclick="loadTxForEdit()">טען תנועה</button>
+<div id="editTxFields" style="display:none;gap:10px">
+<b id="editTxInfo"></b>
+<select id="editDirection"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select>
+<select id="editFrequency"><option value="קבועה">קבועה</option><option value="חד פעמי">חד פעמי</option></select>
+<select id="editCategory"><option value="דיור">דיור</option><option value="מזון">מזון</option><option value="תחבורה">תחבורה</option><option value="דלק">דלק</option><option value="תקשורת">תקשורת</option><option value="ילדים">ילדים</option><option value="בריאות">בריאות</option><option value="ביטוחים">ביטוחים</option><option value="חובות">חובות</option><option value="שוק ההון">שוק ההון</option><option value="בילויים">בילויים</option><option value="קניות">קניות</option><option value="אחר">אחר</option></select>
+<select id="editScope"><option value="one">רק התנועה בתאריך הזה</option><option value="all">כל התאריכים מאותו בית עסק / מקור</option></select>
+<button onclick="saveTxEdit()">שמור תיקון</button>
+</div>
+</div>
+<div style="overflow:auto;margin-top:16px"><table><thead><tr><th>מס׳</th><th>תאריך</th><th>מקור</th><th>סכום</th><th>סוג</th><th>קטגוריה</th></tr></thead><tbody id="txTable"></tbody></table></div>
 </div>
 </section>
 
@@ -394,7 +408,7 @@ budgetTable.innerHTML='<table><thead><tr><th>קטגוריה</th><th>סוג</th><
 categories.map(c=>`<tr><td>${c.name}</td><td>${c.type}</td><td>${fmt(c.budget)}</td><td>${fmt(spent(c.name))}</td><td>${fmt(c.budget-spent(c.name))}</td></tr>`).join('')+'</tbody></table>'
 }
 function renderTx(){
-txTable.innerHTML=[...transactions].reverse().map(t=>`<tr><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
+txTable.innerHTML=[...transactions].reverse().map(t=>`<tr><td>#${String(txNumberMap()[txUniqueKey(t)]||0).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('')
 }
 function renderSelects(){
 const o=categories.map(c=>`<option>${c.name}</option>`).join('');
@@ -487,18 +501,67 @@ function applyTxRule(t){
   const broad=loadTxRules()[txRuleKey(t)]||{};
   if(broad.category)t.category=broad.category;
   if(broad.frequency)t.kind=broad.frequency;
+  if(broad.direction)t.direction=broad.direction;
 
   // Then a specific transaction override wins.
   const specific=loadSpecificTxRules()[txUniqueKey(t)]||{};
   if(specific.category)t.category=specific.category;
   if(specific.frequency)t.kind=specific.frequency;
+  if(specific.direction)t.direction=specific.direction;
   return t;
+}
+
+function txNumberMap(){
+  const all=monthTx().slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const map={}; all.forEach((t,i)=>map[txUniqueKey(t)]=i+1); return map;
+}
+function txByNumber(n){
+  const map=txNumberMap();
+  return monthTx().find(t=>map[txUniqueKey(t)]===Number(n));
+}
+function saveDirectionRule(t,value,scope){
+  const storeKey=scope==='all'?'txSourceRules':'txSpecificRules';
+  const key=scope==='all'?txRuleKey(t):txUniqueKey(t);
+  let rules={}; try{rules=JSON.parse(localStorage.getItem(storeKey)||'{}')}catch(e){}
+  rules[key]=rules[key]||{}; rules[key].direction=value;
+  localStorage.setItem(storeKey,JSON.stringify(rules));
+  transactions.forEach(x=>{
+    if((scope==='all'?txRuleKey(x):txUniqueKey(x))===key)x.direction=value;
+  });
+}
+function loadTxForEdit(){
+  const t=txByNumber(document.getElementById('editTxNumber').value);
+  const f=document.getElementById('editTxFields');
+  if(!t){f.style.display='none';alert('לא נמצאה תנועה במספר הזה');return;}
+  f.style.display='grid';
+  document.getElementById('editTxInfo').textContent=(t.merchant||t.description||'תנועה')+' • '+(t.date||'')+' • '+fmt(t.amount||0);
+  document.getElementById('editDirection').value=t.direction||'expense';
+  document.getElementById('editFrequency').value=String(t.kind||'')==='קבועה'?'קבועה':'חד פעמי';
+  document.getElementById('editCategory').value=t.category||'אחר';
+}
+function saveTxEdit(){
+  const t=txByNumber(document.getElementById('editTxNumber').value);
+  if(!t){alert('לא נמצאה תנועה');return;}
+  const scope=document.getElementById('editScope').value;
+  const category=document.getElementById('editCategory').value;
+  const frequency=document.getElementById('editFrequency').value;
+  const direction=document.getElementById('editDirection').value;
+  if(scope==='all'){
+    saveTxRuleByKey(txRuleKey(t),'category',category);
+    saveTxRuleByKey(txRuleKey(t),'frequency',frequency);
+  }else{
+    saveSpecificTxRuleByKey(txUniqueKey(t),'category',category);
+    saveSpecificTxRuleByKey(txUniqueKey(t),'frequency',frequency);
+  }
+  saveDirectionRule(t,direction,scope);
+  render(); alert('התיקון נשמר');
 }
 function setBankView(v){
   bankView=v;
   renderBank();
 }
 function renderBank(){
+  const numMap=txNumberMap();
   const el=document.getElementById('bankRows');
   if(!el)return;
 
@@ -527,7 +590,7 @@ function renderBank(){
       const frequency=String(t.kind||'')==='קבועה'?'קבועה':'חד פעמי';
       const sid=`scope_${bankView}_${g.fixed?'f':'n'}_${i}`;
       return `<div class="item"><div style="width:100%">
-        <b>${t.merchant||t.description||'תנועה'}</b>
+        <b>#${String(numMap[txUniqueKey(t)]||0).padStart(3,'0')} • ${t.merchant||t.description||'תנועה'}</b>
         <div class="muted">${t.date||''} • ${fmt(t.amount||0)}</div>
         <div class="tx-edit">
           <select id="${sid}">
