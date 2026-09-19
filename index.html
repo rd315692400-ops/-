@@ -162,6 +162,37 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
   margin-inline-start:10px !important;
 }
 </style>
+
+<style>
+/* v2.3 — premium monthly balance + readable budget rows */
+.budget-row,.budget-item,.budget-line,.budget-stat,.budget-summary-row{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 18px minmax(110px,auto) !important;
+  align-items:center !important;
+  column-gap:12px !important;
+}
+.budget-row .budget-dash,.budget-item .budget-dash,.budget-line .budget-dash,
+.budget-stat .budget-dash,.budget-summary-row .budget-dash{
+  text-align:center;
+}
+.premium-monthly-balance{
+  width:100%;box-sizing:border-box;margin-top:22px;padding:20px 16px 16px;
+  border-radius:24px;background:linear-gradient(145deg,#fffdf8,#fff);
+  border:1px solid rgba(184,137,47,.22);box-shadow:0 12px 30px rgba(7,24,45,.08);
+}
+.pmb-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.pmb-title{font-size:20px;font-weight:900;color:#07182d}
+.pmb-balance{padding:8px 12px;border-radius:14px;background:#fff4d7;color:#76520b;font-weight:900}
+.pmb-chart{height:210px;display:flex;align-items:flex-end;gap:18px;padding:12px 8px 8px;border-bottom:1px solid rgba(7,24,45,.12)}
+.pmb-week{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:6px;position:relative;padding-bottom:24px}
+.pmb-bar{width:28%;min-width:12px;border-radius:9px 9px 3px 3px}
+.pmb-income{background:linear-gradient(180deg,#f4d47b,#a8781d)}
+.pmb-expense{background:linear-gradient(180deg,#66717c,#25313d)}
+.pmb-week-label{position:absolute;bottom:0;right:0;left:0;text-align:center;font-size:11px;color:#56606d}
+.pmb-legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:#44505d}
+.pmb-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:6px}
+.pmb-dot.gold{background:#c69a3a}.pmb-dot.dark{background:#35414c}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1156,6 +1187,50 @@ window.addEventListener('load',()=>{
   }
   const obs=new MutationObserver(()=>addBudgetChart());
   window.addEventListener('load',()=>{addBudgetChart();obs.observe(document.body,{childList:true,subtree:true});});
+})();
+</script>
+
+<script>
+(function(){
+ function n(v){return Number(v)||0}
+ function fmt(v){return Math.round(v).toLocaleString('he-IL')}
+ function addDashes(){
+   const roots=[...document.querySelectorAll('.budget-row,.budget-item,.budget-line,.budget-stat,.budget-summary-row')];
+   roots.forEach(r=>{
+     if(r.querySelector('.budget-dash'))return;
+     const kids=[...r.children];
+     if(kids.length>=2){
+       const dash=document.createElement('span');dash.className='budget-dash';dash.textContent='-';
+       r.insertBefore(dash,kids[kids.length-1]);
+     }
+   });
+ }
+ function addMonthlyBalance(){
+   if(document.querySelector('.premium-monthly-balance'))return;
+   const attention=[...document.querySelectorAll('*')].find(e=>(e.textContent||'').trim()==='דורש תשומת לב');
+   if(!attention)return;
+   const card=attention.closest('.card,.panel,.section')||attention.parentElement;
+   if(!card)return;
+   const rows=typeof monthTx==='function'?monthTx():[];
+   const income=rows.filter(t=>t.direction==='income').reduce((s,t)=>s+n(t.amount),0);
+   const expense=rows.filter(t=>t.direction==='expense').reduce((s,t)=>s+n(t.amount),0);
+   const balance=income-expense;
+   const weekly=[1,2,3,4].map(w=>({w,inc:0,exp:0}));
+   rows.forEach(t=>{
+     const d=new Date(t.date); if(Number.isNaN(d.getTime()))return;
+     const w=Math.min(4,Math.floor((d.getDate()-1)/7)+1), x=weekly[w-1];
+     if(t.direction==='income')x.inc+=n(t.amount); else if(t.direction==='expense')x.exp+=n(t.amount);
+   });
+   const max=Math.max(1,...weekly.flatMap(x=>[x.inc,x.exp]));
+   const box=document.createElement('section');box.className='premium-monthly-balance';
+   box.innerHTML=`<div class="pmb-head"><div class="pmb-title">מאזן חודשי</div><div class="pmb-balance">יתרה נוכחית ${fmt(balance)} ₪</div></div>
+   <div class="pmb-chart">${weekly.map(x=>`<div class="pmb-week"><div class="pmb-bar pmb-income" style="height:${Math.max(3,x.inc/max*100)}%"></div><div class="pmb-bar pmb-expense" style="height:${Math.max(3,x.exp/max*100)}%"></div><div class="pmb-week-label">שבוע ${x.w}</div></div>`).join('')}</div>
+   <div class="pmb-legend"><span><i class="pmb-dot gold"></i>הכנסות</span><span><i class="pmb-dot dark"></i>הוצאות</span></div>`;
+   card.insertAdjacentElement('afterend',box);
+ }
+ const run=()=>{addDashes();addMonthlyBalance()};
+ window.addEventListener('load',run);
+ new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 </body>
