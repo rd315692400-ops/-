@@ -103,6 +103,39 @@ body{background:linear-gradient(180deg,#eef3f9 0,#f8fafc 45%,#fff 100%)}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="המנהל הפיננסי שלי">
+
+<style>
+/* v2.1 — budget visual polish */
+.budget-row, .budget-item, .budget-line { column-gap:10px; row-gap:8px; }
+.budget-row strong, .budget-row b,
+.budget-item strong, .budget-item b,
+.budget-line strong, .budget-line b { margin-inline-start:8px; }
+.budget-progress, .budget-progress-card, .budget-meter, .budget-status {
+  margin-top:18px !important;
+}
+.budget-chart-wrap{
+  margin-top:18px;
+  padding:18px;
+  border-radius:22px;
+  background:linear-gradient(145deg,rgba(7,24,45,.98),rgba(18,46,78,.96));
+  box-shadow:0 12px 30px rgba(7,24,45,.14);
+  color:#fff;
+}
+.budget-chart-title{font-weight:800;font-size:16px;margin-bottom:14px}
+.budget-chart{
+  height:150px; display:flex; align-items:flex-end; gap:9px;
+  padding:14px 8px 4px; border-bottom:1px solid rgba(255,255,255,.18);
+}
+.budget-chart-bar{
+  flex:1; min-width:8px; border-radius:9px 9px 3px 3px;
+  background:linear-gradient(180deg,#f7d77b,#b8892f);
+  box-shadow:0 4px 14px rgba(214,174,79,.22);
+}
+.budget-chart-caption{
+  display:flex;justify-content:space-between;gap:12px;
+  margin-top:10px;font-size:12px;opacity:.82
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1064,6 +1097,41 @@ window.addEventListener('load',()=>{
     navigator.serviceWorker.register('/service-worker.js').catch(console.warn);
   }
 });
+</script>
+
+<script>
+(function(){
+  function moneyNum(v){ return Number(v)||0; }
+  function addBudgetChart(){
+    const candidates=[...document.querySelectorAll('h1,h2,h3,h4,div,span')];
+    const marker=candidates.find(el=>{
+      const t=(el.textContent||'').trim();
+      return t==='מודד עמידה בתקציב' || t==='מדד עמידה בתקציב';
+    });
+    if(!marker) return;
+    const host=marker.closest('.card,.panel,.section,.budget-card') || marker.parentElement;
+    if(!host || host.querySelector('.budget-chart-wrap')) return;
+
+    const rows=(typeof monthTx==='function'?monthTx():[]);
+    const exp=rows.filter(t=>t.direction==='expense');
+    const totals={};
+    exp.forEach(t=>totals[t.category||'אחר']=(totals[t.category||'אחר']||0)+moneyNum(t.amount));
+    const top=Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    if(!top.length) return;
+    const max=Math.max(...top.map(x=>x[1]),1);
+
+    const wrap=document.createElement('div');
+    wrap.className='budget-chart-wrap';
+    wrap.innerHTML='<div class="budget-chart-title">הוצאות החודש לפי קטגוריה</div>'+
+      '<div class="budget-chart">'+top.map(([name,val])=>
+        `<div class="budget-chart-bar" title="${name}: ₪${Math.round(val).toLocaleString('he-IL')}" style="height:${Math.max(12,Math.round(val/max*100))}%"></div>`
+      ).join('')+'</div>'+
+      '<div class="budget-chart-caption"><span>'+top.map(x=>x[0]).slice(0,3).join(' • ')+'</span><span>₪ הוצאות בפועל</span></div>';
+    marker.insertAdjacentElement('afterend',wrap);
+  }
+  const obs=new MutationObserver(()=>addBudgetChart());
+  window.addEventListener('load',()=>{addBudgetChart();obs.observe(document.body,{childList:true,subtree:true});});
+})();
 </script>
 </body>
 </html>
