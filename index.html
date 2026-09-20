@@ -554,6 +554,7 @@ nav button{color:#8fa1b4;background:transparent;box-shadow:none;border:none}nav 
 
 <script>
 const fmt=n=>new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:0}).format(Number(n||0));
+const fmtBalance=n=>new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(n||0));
 const storage={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
 
 let categories=storage.get('categories',[
@@ -689,32 +690,29 @@ async function refreshAccountBalance(){
  try{
   const res=await fetch(`${OPEN_FINANCE_BACKEND}/api/account-balance?t=${Date.now()}`,{cache:'no-store'});
   if(!res.ok)throw new Error('balance');
-
   const data=await res.json();
-  const fields=Array.isArray(data?.balanceFields)?data.balanceFields:[];
 
-  // Find the exact balances[index] whose balanceType is "expected".
-  const expectedType=fields.find(x=>
-    /balanceType$/i.test(String(x?.field||'')) &&
-    String(x?.type??x?.value??'').trim().toLowerCase()==='expected'
-  );
-  if(!expectedType)throw new Error('expected balance not found');
+  let b=Number(data?.balance);
 
-  // Keep the exact same path prefix, e.g.
-  // items.[1].balances.[2].balanceType -> items.[1].balances.[2].balanceAmount
-  const prefix=String(expectedType.field).replace(/balanceType$/i,'');
-  const amountRow=fields.find(x=>
-    String(x?.field||'')===prefix+'balanceAmount'
-  );
+  // Backward-compatible fallback while an older server version is still deployed.
+  if(!Number.isFinite(b) && Array.isArray(data?.balanceFields)){
+    const fields=data.balanceFields;
+    const expectedType=fields.find(x=>
+      /balanceType$/i.test(String(x?.field||'')) &&
+      String(x?.type??x?.value??'').trim().toLowerCase()==='expected'
+    );
+    if(expectedType){
+      const prefix=String(expectedType.field).replace(/balanceType$/i,'');
+      const amountRow=fields.find(x=>String(x?.field||'')===prefix+'balanceAmount');
+      b=Number(amountRow?.value);
+    }
+  }
 
-  const b=Number(amountRow?.value);
-  if(!Number.isFinite(b))throw new Error('expected amount not found');
-
+  if(!Number.isFinite(b))throw new Error('expected balance unavailable');
   liveAccountBalance=b;
-
   const el=document.getElementById('premiumBalance');
   const st=document.getElementById('premiumBalanceStatus');
-  if(el)el.textContent=fmt(b);
+  if(el)el.textContent=fmtBalance(b);
   if(st){
    const ok=b>=1000;
    st.textContent=ok?'יתרת תקציב':'חריגה';
@@ -752,7 +750,7 @@ function renderPremiumHome(){
     document.getElementById('premiumBalance').textContent='טוען...';
     const st=document.getElementById('premiumBalanceStatus'); if(st)st.textContent='';
   }else{
-    document.getElementById('premiumBalance').textContent=fmt(liveAccountBalance);
+    document.getElementById('premiumBalance').textContent=fmtBalance(liveAccountBalance);
   }
   refreshAccountBalance();
   document.getElementById('premiumBudgetPct').textContent=pct+'%';
@@ -829,9 +827,34 @@ function renderTx(){
  txTable.innerHTML=filtered.map(t=>`<tr><td>${String(numberMap.get(txUniqueKey(t))).padStart(3,'0')}</td><td>${t.date}</td><td>${t.merchant}</td><td>${fmt(t.amount)}</td><td>${t.direction==='income'?'הכנסה':'הוצאה'} / ${t.kind}</td><td>${t.category}</td></tr>`).join('');
  if(!filtered.length)txTable.innerHTML=`<tr><td colspan="6" class="small" style="text-align:center;padding:22px">אין ${txMainTab==='income'?'הכנסות':'הוצאות'} להצגה בחודש הנוכחי.</td></tr>`;
 }
+
+const INCOME_CATEGORIES=['משכורת','שוק ההון','ביטוח לאומי','מענקים','אחר'];
+function expenseCategoryNames(){
+ return Array.from(new Set([...categories.map(c=>c.name),'חשמל','מים','ארנונה','ביגוד והנעלה','חינוך / מסגרות','קניות לבית','אחר']));
+}
+function categoryOptionsFor(direction){
+ return direction==='income'?INCOME_CATEGORIES:expenseCategoryNames();
+}
+function refreshTxCategoryOptions(){
+ const dir=document.getElementById('txDirection')?.value||'expense';
+ const el=document.getElementById('txCategory'); if(!el)return;
+ const old=el.value;
+ el.innerHTML=categoryOptionsFor(dir).map(c=>`<option value="${c}">${c}</option>`).join('');
+ if(categoryOptionsFor(dir).includes(old))el.value=old;
+}
+function refreshEditCategoryOptions(){
+ const dir=document.getElementById('editDirection')?.value||'expense';
+ const el=document.getElementById('editCategory'); if(!el)return;
+ const old=el.value;
+ el.innerHTML=categoryOptionsFor(dir).map(c=>`<option value="${c}">${c}</option>`).join('');
+ if(categoryOptionsFor(dir).includes(old))el.value=old;
+}
 function renderSelects(){
-const o=categories.map(c=>`<option>${c.name}</option>`).join('');
-txCategory.innerHTML=o;receiptCategory.innerHTML=o;if(document.getElementById('ruleCategory'))ruleCategory.innerHTML=o
+ refreshTxCategoryOptions();
+ refreshEditCategoryOptions();
+ const expenseOptions=expenseCategoryNames().map(c=>`<option>${c}</option>`).join('');
+ if(document.getElementById('receiptCategory'))receiptCategory.innerHTML=expenseOptions;
+ if(document.getElementById('ruleCategory'))ruleCategory.innerHTML=expenseOptions;
 }
 function renderDebts(){
 debtList.innerHTML=debts.length?debts.map(d=>`<div class="cat"><div class="row"><strong>${d.name}</strong><strong>${fmt(d.balance)}</strong></div><div class="small">תשלום חודשי ${fmt(d.monthly)} • ריבית ${d.rate||0}%</div></div>`).join(''):'<div class="small">אין חובות שהוזנו.</div>'
@@ -933,6 +956,7 @@ function applyTxRule(t){
 
 const DEFAULT_MONTHLY_BUDGET={
   incomeTarget:20000,
+  incomeCategories:{'משכורת':0,'שוק ההון':0,'ביטוח לאומי':0,'מענקים':0,'אחר':0},
   categories:{
     'דיור':4500,'מזון':3000,'מזון השלמות':1000,'חשמל':700,'מים':300,'ארנונה':500,
     'דלק':1000,'גז':0,'תקשורת':350,'בריאות':500,'ביטוחים':500,'ביגוד והנעלה':800,
@@ -941,8 +965,19 @@ const DEFAULT_MONTHLY_BUDGET={
   }
 };
 function loadMonthlyBudget(){
-  try{return JSON.parse(localStorage.getItem('monthlyBudgetV1'))||JSON.parse(JSON.stringify(DEFAULT_MONTHLY_BUDGET))}
-  catch(e){return JSON.parse(JSON.stringify(DEFAULT_MONTHLY_BUDGET))}
+  try{
+    const saved=JSON.parse(localStorage.getItem('monthlyBudgetV1'))||{};
+    return {
+      ...JSON.parse(JSON.stringify(DEFAULT_MONTHLY_BUDGET)),
+      ...saved,
+      incomeCategories:{...DEFAULT_MONTHLY_BUDGET.incomeCategories,...(saved.incomeCategories||{})},
+      categories:{...DEFAULT_MONTHLY_BUDGET.categories,...(saved.categories||{})}
+    };
+  }catch(e){return JSON.parse(JSON.stringify(DEFAULT_MONTHLY_BUDGET))}
+}
+function saveIncomeBudgetValue(cat,val){
+  const b=loadMonthlyBudget(); b.incomeCategories[cat]=Math.max(0,Number(val)||0);
+  localStorage.setItem('monthlyBudgetV1',JSON.stringify(b)); renderBudget();
 }
 function saveBudgetValue(cat,val){
   const b=loadMonthlyBudget(); b.categories[cat]=Math.max(0,Number(val)||0);
@@ -970,7 +1005,15 @@ function renderBudget(){
       <div class="kpi"><span>יתרה מול 20,000</span><b>${fmt(balance)}</b></div>
       <div class="kpi"><span>תקציב מתוכנן לקטגוריות</span><b>${fmt(planned)}</b></div>
     </div>
-    <h3 class="section" style="margin-top:18px">תקציב לפי קטגוריה</h3>
+    <h3 class="section" style="margin-top:18px">תקציב הכנסות לפי קטגוריה</h3>
+    <div style="overflow:auto"><table><thead><tr><th>קטגוריית הכנסה</th><th>תקציב</th><th>בפועל</th><th>פער</th></tr></thead><tbody>
+    ${Object.entries(b.incomeCategories).map(([cat,limit])=>{
+      const actual=rows.filter(t=>t.direction==='income' && t.category===cat).reduce((a,t)=>a+(Number(t.amount)||0),0);
+      const d=actual-limit;
+      return `<tr><td>${cat}</td><td><input type="number" min="0" value="${limit}" style="width:95px" onchange="saveIncomeBudgetValue(${JSON.stringify(cat)},this.value)"></td><td>${fmt(actual)}</td><td>${d>=0?'עודף '+fmt(d):'חסר '+fmt(Math.abs(d))}</td></tr>`;
+    }).join('')}
+    </tbody></table></div>
+    <h3 class="section" style="margin-top:18px">תקציב הוצאות לפי קטגוריה</h3>
     <div style="overflow:auto"><table><thead><tr><th>קטגוריה</th><th>תקציב</th><th>נוצל</th><th>יתרה / חריגה</th></tr></thead><tbody>
     ${Object.entries(b.categories).map(([cat,limit])=>{
       const used=rows.filter(t=>t.direction==='expense' && t.category===cat).reduce((a,t)=>a+(Number(t.amount)||0),0);
@@ -1011,6 +1054,7 @@ function loadTxForEdit(){
   f.style.display='grid';
   document.getElementById('editTxInfo').textContent=(t.merchant||t.description||'תנועה')+' • '+(t.date||'')+' • '+fmt(t.amount||0);
   document.getElementById('editDirection').value=t.direction||'expense';
+  refreshEditCategoryOptions();
   document.getElementById('editFrequency').value=String(t.kind||'')==='קבועה'?'קבועה':'חד פעמי';
   document.getElementById('editCategory').value=t.category||'אחר';
 }
@@ -1188,8 +1232,12 @@ async function disconnectBank(){
 function guessBankCategory(desc,dir){
  const manual=manualCategory(desc);if(manual)return manual;
  if(dir==='income'){
-  if(desc.includes('ביטוח לאומי'))return{category:'ילדים',kind:'קבועה'};
-  return{category:'דיור',kind:'קבועה'}
+  const d=String(desc||'').toLowerCase();
+  if(d.includes('ביטוח לאומי'))return{category:'ביטוח לאומי',kind:'קבועה'};
+  if(d.includes('מענק'))return{category:'מענקים',kind:'חד פעמי'};
+  if(d.includes('ברוקר')||d.includes('שוק ההון'))return{category:'שוק ההון',kind:'חד פעמי'};
+  if(d.includes('משכורת')||d.includes('שכר'))return{category:'משכורת',kind:'קבועה'};
+  return{category:'אחר',kind:'חד פעמי'};
  }
  const s=autoClassifyMerchant(desc);
  if(s)return{category:s,kind:autoDetectRecurringType(desc)||'שוטפת'};
